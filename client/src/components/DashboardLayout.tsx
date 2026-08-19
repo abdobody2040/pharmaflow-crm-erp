@@ -2,8 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, FileSignature,
-  LayoutDashboard, LogOut, Menu, Settings, ShieldCheck, UsersRound,
+  Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature,
+  KanbanSquare, LayoutDashboard, LogOut, MapPinned, Menu, Settings, ShieldCheck, UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -14,9 +14,18 @@ type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; rol
 const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Workspace", items: [{ label: "Command Center", path: "/", icon: LayoutDashboard }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },
+  { title: "Core CRM", items: [
+    { label: "Accounts & HCPs", path: "/crm/accounts", icon: Building2, roles: ["admin", "manager", "rep", "exec"] },
+    { label: "Contacts", path: "/crm/contacts", icon: ContactRound, roles: ["admin", "manager", "rep", "exec"] },
+    { label: "Territories & Plans", path: "/crm/plans", icon: MapPinned, roles: ["admin", "manager", "rep", "exec"] },
+    { label: "Manage Territories", path: "/crm/territories", icon: MapPinned, roles: ["admin", "manager"] },
+    { label: "Cycle Planner", path: "/crm/cycles", icon: ClipboardList, roles: ["admin", "manager"] },
+    { label: "Opportunity Pipeline", path: "/crm/opportunities", icon: KanbanSquare, roles: ["admin", "manager", "rep", "exec"] },
+  ] },
   { title: "Operations", items: [
     { label: "Employee Directory", path: "/directory", icon: UsersRound, roles: ["admin", "manager", "hr", "exec"] },
     { label: "Visit Logs", path: "/visits", icon: ClipboardList, roles: ["admin", "manager", "exec"] },
+    { label: "Log Visit", path: "/visits/new", icon: ClipboardList, roles: ["admin", "manager", "rep"] },
     { label: "Sample Transactions", path: "/samples", icon: Activity, roles: ["admin", "manager", "exec"] },
     { label: "E-Signatures", path: "/signatures", icon: FileSignature, roles: ["admin", "manager", "exec"] },
   ] },

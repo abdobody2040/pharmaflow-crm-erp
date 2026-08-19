@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import {
   date,
+  decimal,
   index,
   int,
   json,
@@ -100,6 +101,41 @@ export const userRoleAssignments = mysqlTable(
   table => [index("user_role_assignments_tenant_user_idx").on(table.tenantId, table.userId), index("user_role_assignments_tenant_role_idx").on(table.tenantId, table.roleId)],
 );
 
+export const territories = mysqlTable("territories", {
+  id: tenantRecordId("id").primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  name: varchar("name", { length: 180 }).notNull(), code: varchar("code", { length: 64 }).notNull(), region: varchar("region", { length: 120 }),
+  managerUserId: int("managerUserId").references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }), boundaryGeoJson: json("boundaryGeoJson"),
+  status: mysqlEnum("status", ["active", "inactive", "archived"]).notNull().default("active"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [uniqueIndex("territories_tenant_code_unique").on(table.tenantId, table.code), index("territories_tenant_status_idx").on(table.tenantId, table.status)]);
+
+export const accounts = mysqlTable("accounts", {
+  id: tenantRecordId("id").primaryKey(), tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  accountType: mysqlEnum("accountType", ["hcp", "pharmacy", "hospital", "distributor", "organization"]).notNull(), name: varchar("name", { length: 255 }).notNull(), externalReference: varchar("externalReference", { length: 128 }), specialty: varchar("specialty", { length: 160 }), tier: mysqlEnum("tier", ["a", "b", "c", "unclassified"]).notNull().default("unclassified"),
+  territoryId: varchar("territoryId", { length: 36 }).references(() => territories.id, { onDelete: "restrict", onUpdate: "restrict" }), email: varchar("email", { length: 320 }), phone: varchar("phone", { length: 64 }), address: text("address"), latitude: decimal("latitude", { precision: 10, scale: 7 }), longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  status: mysqlEnum("status", ["active", "inactive", "archived"]).notNull().default("active"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("accounts_tenant_status_idx").on(table.tenantId, table.status), index("accounts_tenant_type_idx").on(table.tenantId, table.accountType), index("accounts_tenant_territory_idx").on(table.tenantId, table.territoryId)]);
+
+export const contacts = mysqlTable("contacts", {
+  id: tenantRecordId("id").primaryKey(), tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }), accountId: varchar("accountId", { length: 36 }).notNull().references(() => accounts.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  firstName: varchar("firstName", { length: 128 }).notNull(), lastName: varchar("lastName", { length: 128 }).notNull(), title: varchar("title", { length: 160 }), email: varchar("email", { length: 320 }), phone: varchar("phone", { length: 64 }), preferredChannel: mysqlEnum("preferredChannel", ["email", "phone", "in_person", "whatsapp", "other"]).notNull().default("email"),
+  status: mysqlEnum("status", ["active", "inactive", "archived"]).notNull().default("active"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("contacts_tenant_account_idx").on(table.tenantId, table.accountId), index("contacts_tenant_status_idx").on(table.tenantId, table.status)]);
+
+export const cyclePlans = mysqlTable("cyclePlans", {
+  id: tenantRecordId("id").primaryKey(), tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }), name: varchar("name", { length: 255 }).notNull(), description: text("description"), startDate: date("startDate").notNull(), endDate: date("endDate").notNull(),
+  status: mysqlEnum("status", ["draft", "active", "closed", "archived"]).notNull().default("draft"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("cycle_plans_tenant_status_idx").on(table.tenantId, table.status), index("cycle_plans_tenant_date_idx").on(table.tenantId, table.startDate, table.endDate)]);
+
+export const plannedVisits = mysqlTable("plannedVisits", {
+  id: tenantRecordId("id").primaryKey(), tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }), cyclePlanId: varchar("cyclePlanId", { length: 36 }).notNull().references(() => cyclePlans.id, { onDelete: "restrict", onUpdate: "restrict" }), accountId: varchar("accountId", { length: 36 }).notNull().references(() => accounts.id, { onDelete: "restrict", onUpdate: "restrict" }), repUserId: int("repUserId").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  plannedStartAt: timestamp("plannedStartAt").notNull(), plannedEndAt: timestamp("plannedEndAt"), priority: mysqlEnum("priority", ["critical", "high", "normal", "low"]).notNull().default("normal"), objective: text("objective"), status: mysqlEnum("status", ["planned", "completed", "skipped", "rescheduled"]).notNull().default("planned"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("planned_visits_tenant_rep_date_idx").on(table.tenantId, table.repUserId, table.plannedStartAt), index("planned_visits_tenant_cycle_idx").on(table.tenantId, table.cyclePlanId)]);
+
+export const opportunities = mysqlTable("opportunities", {
+  id: tenantRecordId("id").primaryKey(), tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }), accountId: varchar("accountId", { length: 36 }).references(() => accounts.id, { onDelete: "restrict", onUpdate: "restrict" }), name: varchar("name", { length: 255 }).notNull(), stage: mysqlEnum("stage", ["qualification", "discovery", "proposal", "negotiation", "won", "lost"]).notNull().default("qualification"), value: decimal("value", { precision: 14, scale: 2 }).notNull().default("0.00"), probability: int("probability").notNull().default(10), expectedCloseDate: date("expectedCloseDate"), ownerUserId: int("ownerUserId").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }), status: mysqlEnum("status", ["open", "won", "lost", "archived"]).notNull().default("open"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(), createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("opportunities_tenant_stage_idx").on(table.tenantId, table.stage), index("opportunities_tenant_owner_idx").on(table.tenantId, table.ownerUserId)]);
+
 /** Immutable evidence chain. No UPDATE or DELETE procedure is ever exposed for this table. */
 export const auditEvents = mysqlTable(
   "auditEvents",
@@ -128,10 +164,15 @@ export const visitLogs = mysqlTable(
     id: tenantRecordId("id").primaryKey(),
     tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
     repUserId: int("repUserId").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    accountId: varchar("accountId", { length: 36 }).references(() => accounts.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    cyclePlanId: varchar("cyclePlanId", { length: 36 }).references(() => cyclePlans.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    plannedVisitId: varchar("plannedVisitId", { length: 36 }).references(() => plannedVisits.id, { onDelete: "restrict", onUpdate: "restrict" }),
     accountName: varchar("accountName", { length: 255 }).notNull(),
     objective: text("objective").notNull(),
     productsDiscussed: json("productsDiscussed").notNull(),
+    samplesGiven: json("samplesGiven"),
     nextSteps: text("nextSteps"),
+    eSignatureId: varchar("eSignatureId", { length: 36 }).references(() => electronicSignatures.id, { onDelete: "restrict", onUpdate: "restrict" }),
     occurredAt: timestamp("occurredAt").notNull(),
     supersedesId: varchar("supersedesId", { length: 36 }),
     status: mysqlEnum("status", complianceStatuses).notNull().default("recorded"),
@@ -161,6 +202,19 @@ export const sampleTransactions = mysqlTable(
     createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
   },
   table => [index("sample_transactions_tenant_occurred_idx").on(table.tenantId, table.occurredAt), index("sample_transactions_tenant_lot_idx").on(table.tenantId, table.lotNumber)],
+);
+
+export const visitSampleLinks = mysqlTable(
+  "visitSampleLinks",
+  {
+    id: tenantRecordId("id").primaryKey(),
+    tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    visitLogId: varchar("visitLogId", { length: 36 }).notNull().references(() => visitLogs.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    sampleTransactionId: varchar("sampleTransactionId", { length: 36 }).notNull().references(() => sampleTransactions.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  },
+  table => [uniqueIndex("visit_sample_links_tenant_unique").on(table.tenantId, table.visitLogId, table.sampleTransactionId), index("visit_sample_links_tenant_visit_idx").on(table.tenantId, table.visitLogId)],
 );
 
 export const electronicSignatures = mysqlTable(

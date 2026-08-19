@@ -14,3 +14,24 @@
 - [x] Document the target MySQL 8.4 migration and append-only trigger validation procedure required before production go-live.
 - [x] Add a secured super-admin plan-tier change action to the tenant console.
 - [x] Extend Vitest coverage for super-admin provisioning/lifecycle authorization and immutable procedure guardrails.
+- [x] Define tenant-scoped CRM schema for accounts, contacts, territories, cycle plans, planned visits, and opportunities.
+- [x] Generate and apply the Core CRM MySQL migration with foreign keys and tenant-scoped indexes.
+- [x] Implement tenant-scoped tRPC CRM procedures for account, contact, territory, planning, and opportunity workflows.
+- [x] Extend immutable visit evidence with CRM account, plan, samples, and e-signature references.
+- [x] Build React CRM screens for account directory, account detail, territory management, cycle planning, and compliance-aware visit evidence.
+- [x] Build the role-gated Kanban opportunity pipeline for B2B opportunities.
+- [x] Add and run Core CRM Vitest contract coverage for tenant isolation, role authorization, immutable visits, and pipeline transitions.
+- [x] Verify Core CRM screens responsively and save the Core CRM checkpoint.
+- [x] Verify Core CRM tenant-scoped database indexes after the migration timeout recovery.
+- [x] Enforce concrete immutable visit references for samples and electronic signatures.
+- [x] Add dedicated account detail, territory-management, and cycle-plan planning controls.
+- [x] Extend CRM tests for role gating, tenant isolation, immutable visit paths, and pipeline stage behavior.
+- [x] Re-verify all Core CRM tenant-scoped indexes after recovery.
+- [x] Replace visit sample snapshots with concrete immutable sample-transaction linkage.
+- [x] Add direct CRM tenant-isolation and opportunity-stage behavior tests.
+- [x] Save the final Core CRM checkpoint after the last validation pass.
+- [x] Add enforced immutable visit-to-sample transaction linkage.
+- [x] Add direct CRM tenant-isolation and opportunity-stage behavior tests.
+- [x] Save the validated Core CRM checkpoint.
+- [x] Add a direct cross-tenant CRM procedure rejection test.
+- [x] Add a mocked direct CRM cross-tenant mutation rejection test.

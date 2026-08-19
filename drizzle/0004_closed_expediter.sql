@@ -1,0 +1,1 @@
+ALTER TABLE `visitLogs` ADD CONSTRAINT `visitLogs_eSignatureId_electronicSignatures_id_fk` FOREIGN KEY (`eSignatureId`) REFERENCES `electronicSignatures`(`id`) ON DELETE restrict ON UPDATE restrict;

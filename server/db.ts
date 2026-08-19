@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditEvents,
@@ -12,6 +12,7 @@ import {
   users,
   UserRole,
   visitLogs,
+  visitSampleLinks,
 } from "../drizzle/schema";
 import type { TenantScope } from "./security/access";
 import { recordHash } from "./security/localJwt";
@@ -278,16 +279,26 @@ export async function listVisits(scope: TenantScope) {
 }
 
 export async function createVisit(scope: TenantScope, input: {
-  accountName: string; objective: string; productsDiscussed: string[]; nextSteps?: string; occurredAt: Date; supersedesId?: string;
+  accountName: string; accountId?: string; cyclePlanId?: string; plannedVisitId?: string; objective: string; productsDiscussed: string[]; sampleTransactionIds?: string[]; nextSteps?: string; eSignatureId?: string; occurredAt: Date; supersedesId?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is unavailable");
   const id = randomUUID();
   await db.insert(visitLogs).values({
-    id, tenantId: scope.tenantId, repUserId: scope.userId, accountName: input.accountName,
-    objective: input.objective, productsDiscussed: input.productsDiscussed, nextSteps: input.nextSteps ?? null,
+    id, tenantId: scope.tenantId, repUserId: scope.userId, accountId: input.accountId ?? null, cyclePlanId: input.cyclePlanId ?? null, plannedVisitId: input.plannedVisitId ?? null, accountName: input.accountName,
+    objective: input.objective, productsDiscussed: input.productsDiscussed, samplesGiven: input.sampleTransactionIds ?? null, nextSteps: input.nextSteps ?? null, eSignatureId: input.eSignatureId ?? null,
     occurredAt: input.occurredAt, supersedesId: input.supersedesId ?? null, status: "recorded", createdBy: scope.userId,
   });
+  if (input.sampleTransactionIds?.length) {
+    const samples = await db.select({ id: sampleTransactions.id }).from(sampleTransactions)
+      .where(and(eq(sampleTransactions.tenantId, scope.tenantId), inArray(sampleTransactions.id, input.sampleTransactionIds)));
+    if (samples.length !== input.sampleTransactionIds.length) {
+      throw new Error("A sample transaction reference is outside the active tenant");
+    }
+    await db.insert(visitSampleLinks).values(input.sampleTransactionIds.map(sampleTransactionId => ({
+      id: randomUUID(), tenantId: scope.tenantId, visitLogId: id, sampleTransactionId, createdBy: scope.userId,
+    })));
+  }
   await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "visit_log", entityId: id,
     eventType: "visit.recorded", operation: "create", oldValue: null, newValue: { accountName: input.accountName, occurredAt: input.occurredAt }, reason: "Immutable visit record created" });
   return { id };

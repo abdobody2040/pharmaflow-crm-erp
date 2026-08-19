@@ -22,6 +22,27 @@
       "when": 1787139384648,
       "tag": "0002_tearful_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1787141237822,
+      "tag": "0003_sparkling_wither",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1787141702808,
+      "tag": "0004_closed_expediter",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1787142058031,
+      "tag": "0005_lean_wallop",
+      "breakpoints": true
     }
   ]
 }
