@@ -7,6 +7,7 @@ const insertValues = vi.fn(async () => undefined);
 const db = { select: vi.fn(() => ({ from: vi.fn(() => ({ where: vi.fn(() => ({ limit: vi.fn(async () => { selectCount += 1; if (mode === "prior") return [{ id: "already-applied" }]; if (mode === "success" && selectCount === 2) return [{ id: "shift-a", tenantId: "tenant-a" }]; if (mode === "tenantB" && selectCount === 2) return [{ id: "shift-b", tenantId: "tenant-b" }]; return []; }) })) })) })), insert: vi.fn(() => ({ values: insertValues })) };
 
 vi.mock("./db", () => ({ getDb: async () => db, getTenantById: async () => ({ id: "tenant-a", status: "active" }), appendAuditEvent, createVisit: vi.fn(), findLocalUser: vi.fn(), getUserByOpenId: vi.fn(), upsertUser: vi.fn() }));
+vi.mock("./services/geofence", () => ({ evaluateLocationGeofences: vi.fn(async () => []), haversineMeters: vi.fn(), isIdlePair: vi.fn() }));
 
 const user = (role: "rep" | "exec") => ({ id: 44, openId: "local:44", tenantId: "tenant-a", name: "Rep", email: "rep@example.com", passwordHash: null, loginMethod: "local_jwt", role, department: null, territory: null, hireDate: null, status: "active", createdAt: new Date(), updatedAt: new Date(), createdBy: 1, lastSignedIn: new Date() });
 const locationInput = { clientMutationId: "bc490c50-8d50-4ec8-9a57-dc57ebaf1c01", shiftId: "ec490c50-8d50-4ec8-9a57-dc57ebaf1c01", latitude: "40.7128000", longitude: "-74.0060000", nearPlannedStop: false, capturedAt: new Date() };

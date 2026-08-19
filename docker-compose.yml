@@ -46,6 +46,7 @@ services:
       - app
     environment:
       APP_PORT: ${APP_PORT:-3000}
+      OSM_TILE_BACKEND: ${OSM_TILE_BACKEND:?set OSM_TILE_BACKEND}
     ports:
       - "${PUBLIC_HTTP_PORT:-80}:80"
     volumes:

@@ -57,3 +57,16 @@
 - [x] Add a direct tenant-B rep procedure rejection test.
 - [x] Model a tenant-B shift record in the direct rep location rejection test.
 - [x] Add executable mobile API serialization and response-parsing contract coverage.
+- [x] Resolve the PostGIS request against the existing MySQL-only deployment constraint and document the selected spatial implementation.
+- [x] Add tenant-scoped geofence, location-alert, trip, and idle-state data models and migration.
+- [x] Implement secure location ingestion, territory/HCP proximity evaluation, mileage accumulation, and idle detection.
+- [x] Build the administrator live map with self-hosted tile configuration, trip history, and geofence alerts.
+- [x] Add GPS backend test coverage for tenant isolation, distance/mileage, geofence state changes, and idle rules.
+- [x] Verify the GPS workspace and save the GPS tracking checkpoint.
+- [x] Implement MySQL spatial-compatible proximity and territory geofence calculations without PostgreSQL/PostGIS.
+- [x] Document the MySQL-only geospatial architecture and PostGIS tradeoff.
+- [x] Link geofence evaluation to planned HCP stops and assigned territory records, including idle-ended events.
+- [x] Surface real trip-history mileage and idle events in the GPS operations interface.
+- [x] Add direct tracking tenant-isolation, trip-mileage, and geofence state-transition tests.
+- [x] Save the final validated GPS tracking checkpoint.
+- [x] Add a direct tracking procedure test proving tenant-A cannot access tenant-B telemetry.

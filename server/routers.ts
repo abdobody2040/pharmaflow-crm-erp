@@ -6,6 +6,7 @@ import { directoryRouter } from "./routers/directory";
 import { platformRouter } from "./routers/platform";
 import { crmRouter } from "./routers/crm";
 import { repRouter } from "./routers/rep";
+import { trackingRouter } from "./routers/tracking";
 
 export const appRouter = router({
   system: systemRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   compliance: complianceRouter,
   crm: crmRouter,
   rep: repRouter,
+  tracking: trackingRouter,
 });
 
 export type AppRouter = typeof appRouter;

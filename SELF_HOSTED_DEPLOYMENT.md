@@ -29,6 +29,15 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `APP_PORT` | Internal Node.js listener consumed by Nginx | `3000` |
 | `PUBLIC_HTTP_PORT` | Host port published by Nginx | `80` |
 | `APP_URL` | Canonical public application URL | `https://crm.example.com` |
+| `OSM_TILE_BACKEND` | Internal URL of the organization’s self-hosted OpenStreetMap tile service | `http://tiles:8080/` |
+
+## Self-Hosted Map Tiles
+
+The GPS Operations map intentionally requests tiles through the relative path `/tiles/{z}/{x}/{y}.png`. Nginx proxies that path to `OSM_TILE_BACKEND`, keeping the map free of public tile-provider dependencies. Operate a tile server inside the same private network or VPS environment, set `OSM_TILE_BACKEND` in `.env`, and verify that `https://<host>/tiles/0/0/0.png` returns a tile before enabling the production map. The tile service is infrastructure operated by the customer; it is not part of the application’s three-service Compose stack.
+
+## MySQL Geospatial Architecture
+
+This deployment remains **MySQL-only**. PostGIS is not used because it is a PostgreSQL extension and would require replacing or adding a second transactional database. GPS operations therefore persist tenant-scoped latitude and longitude evidence in MySQL and evaluate radius-based HCP and territory geofences with a server-side Haversine calculation. This produces distance, near/far, enter/exit, mileage, and idle-rule outcomes without introducing cross-database replication or weakening the existing tenant model. If future requirements need polygon topology, routing, or large-scale spatial joins, evaluate a separately governed PostgreSQL/PostGIS analytics service rather than altering regulated transactional records in place.
 
 ## Production MySQL 8.4 Validation
 
