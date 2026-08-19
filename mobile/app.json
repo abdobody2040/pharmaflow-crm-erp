@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "PharmaFlow Rep",
+    "slug": "pharmaflow-rep",
+    "scheme": "pharmaflowrep",
+    "ios": { "bundleIdentifier": "com.pharmaflow.rep", "infoPlist": { "NSLocationWhenInUseUsageDescription": "PharmaFlow uses your location only during an active shift to support planned HCP visits.", "NSLocationAlwaysAndWhenInUseUsageDescription": "PharmaFlow records route location only after consent and only while you have an active shift." } },
+    "android": { "package": "com.pharmaflow.rep", "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "ACCESS_BACKGROUND_LOCATION", "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_LOCATION"] },
+    "plugins": [["expo-location", { "locationAlwaysAndWhenInUsePermission": "Allow PharmaFlow Rep to track your route only during an active shift." }], "expo-sqlite"]
+  }
+}

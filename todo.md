@@ -35,3 +35,25 @@
 - [x] Save the validated Core CRM checkpoint.
 - [x] Add a direct cross-tenant CRM procedure rejection test.
 - [x] Add a mocked direct CRM cross-tenant mutation rejection test.
+- [x] Define secure offline sync envelopes, immutable mutation idempotency, and mobile GPS consent/retention boundaries.
+- [x] Add tenant-scoped rep sync, call-plan, sample check-out, and audited location telemetry procedures.
+- [x] Build responsive web rep screens for daily plan, HCP lookup, visit capture, sample inventory, and sync queue status.
+- [x] Build shared mobile rep implementation scaffolding with React Native SQLite cache and offline queue design.
+- [x] Add configurable background GPS interval handling and location telemetry consent controls.
+- [x] Test sync idempotency, immutable audit routing, tenant isolation, and rep role authorization.
+- [x] Verify the rep experience and save the offline-first rep checkpoint.
+- [x] Enforce 60-second active-shift GPS reporting with 15-second near-planned-stop mode and immediate stop behavior.
+- [x] Add consent capture, disclosure, retention metadata, and visible active-tracking state to rep shift workflows.
+- [x] Add tenant-scoped immutable rep sample check-out workflow and UI.
+- [x] Replace mobile configuration placeholders with injected API/session settings and working shift initiation.
+- [x] Add an explicit consent disclosure screen before requesting mobile location permission.
+- [x] Add direct rep idempotency, audit, tenant-isolation, and role-gating tests.
+- [x] Verify rep screens and save the final rep-app checkpoint.
+- [x] Wire mobile session handoff and backend-driven active shift creation without pre-seeded credentials.
+- [x] Add direct mocked rep procedure tests for idempotency, tenant isolation, role gating, and audit writes.
+- [x] Add positive rep write audit and tenant-B cross-tenant procedure tests.
+- [x] Validate the mobile login, consent, and shift-start contract against the real API request shape.
+- [x] Save the final validated rep-app checkpoint.
+- [x] Add a direct tenant-B rep procedure rejection test.
+- [x] Model a tenant-B shift record in the direct rep location rejection test.
+- [x] Add executable mobile API serialization and response-parsing contract coverage.

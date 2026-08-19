@@ -13,6 +13,7 @@ type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; rol
 
 const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Workspace", items: [{ label: "Command Center", path: "/", icon: LayoutDashboard }] },
+  { title: "Rep Tools", items: [{ label: "My Field Day", path: "/rep", icon: Activity, roles: ["admin", "manager", "rep"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },
   { title: "Core CRM", items: [
     { label: "Accounts & HCPs", path: "/crm/accounts", icon: Building2, roles: ["admin", "manager", "rep", "exec"] },
