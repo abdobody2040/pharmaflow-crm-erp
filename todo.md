@@ -115,7 +115,7 @@
 - [x] Build the governed AI call-assistant and next-best-action web/rep experiences.
 - [x] Add direct tests for AI tenant isolation, policy routing, structured-output validation, and prioritization evidence.
 - [x] Verify AI workflows, tenant boundaries, and role-guarded route access for AI Layer Part 1.
-- [ ] Save the API-free AI Layer Part 1 release checkpoint.
+- [x] Save the API-free AI Layer Part 1 release checkpoint.
 - [x] Add the optional self-hosted GPU inference profile and operator configuration for the local-model route.
 - [x] Stabilize the existing HR payroll authorization contract under the expanded full-suite workload.
 - [x] Add secure dictated-note capture, temporary object storage, and transcription input for the call assistant.
