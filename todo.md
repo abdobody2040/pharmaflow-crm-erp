@@ -93,4 +93,4 @@
 - [x] Verify the ERP/HR workflows and save the ERP/HR checkpoint.
 - [x] Expose department and territory editing controls within tenant-scoped HR employee records.
 - [x] Add procedure-level HR tests for tenant-boundary checks and HR lifecycle mutations.
-- [ ] Save the final ERP/HR checkpoint after the completed procedure validation pass.
+- [x] Save the final ERP/HR checkpoint after the completed procedure validation pass.
