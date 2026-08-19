@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature,
-  KanbanSquare, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, UsersRound,
+  KanbanSquare, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, Sparkles, UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -13,9 +13,10 @@ type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; rol
 
 const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Workspace", items: [{ label: "Command Center", path: "/", icon: LayoutDashboard }] },
-  { title: "Rep Tools", items: [{ label: "My Field Day", path: "/rep", icon: Activity, roles: ["admin", "manager", "rep"] }] },
+  { title: "Rep Tools", items: [{ label: "My Field Day", path: "/rep", icon: Activity, roles: ["admin", "manager", "rep"] }, { label: "Call Assistant", path: "/rep/assistant", icon: Sparkles, roles: ["admin", "manager", "rep"] }] },
   { title: "People", items: [{ label: "ERP / HR", path: "/hr", icon: UsersRound, roles: ["admin", "manager", "rep", "hr"] }] },
   { title: "Engagement", items: [{ label: "Marketing & CLM", path: "/marketing", icon: Megaphone, roles: ["admin", "manager", "exec"] }] },
+  { title: "Intelligence", items: [{ label: "AI Control Center", path: "/ai", icon: Sparkles, roles: ["admin", "manager"] }] },
   { title: "Routing", items: [{ label: "Daily Routes", path: "/routes", icon: Route, roles: ["admin", "manager", "rep"] }] },
   { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },

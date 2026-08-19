@@ -26,4 +26,14 @@ describe("mobile API transport", () => {
     const body = JSON.parse(fetchMock.mock.calls[1][1].body); const payload = SuperJSON.deserialize(body.json) as { eventType: string; occurredAt: Date; accountId: string; plannedVisitId: string };
     expect(fetchMock.mock.calls[1][0]).toBe("https://pharma.example/api/trpc/marketing.usage.record"); expect(payload).toMatchObject({ eventType: "presented", accountId: "account-a", plannedVisitId: "visit-a" }); expect(payload.occurredAt).toBeInstanceOf(Date);
   });
+  it("uses protected AI priority and call-assist transport shapes on mobile", async () => {
+    const fetchMock = vi.fn(); vi.stubGlobal("fetch", fetchMock); const { getMobileNextBestActions, structureMobileCallNote } = await import("../mobile/src/api");
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ result: { data: { json: SuperJSON.serialize([{ id: "nba-a", accountId: "account-a", score: 81, recommendation: "Prioritize account", reasonComponents: { daysSinceVisit: 35, hasCommercialSignal: true } }]) } } }) });
+    await expect(getMobileNextBestActions("https://pharma.example", "jwt")).resolves.toMatchObject([{ id: "nba-a", score: 81 }]);
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/trpc/ai.nextBestAction.list?input="); expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer jwt");
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ result: { data: { json: SuperJSON.serialize({ id: "draft-a", draft: { objective: "Visit", productsDiscussed: [], nextSteps: "Follow up", confidence: 74 } }) } } }) });
+    await expect(structureMobileCallNote("https://pharma.example", "jwt", { note: "Freeform field note", accountId: "account-a" })).resolves.toMatchObject({ id: "draft-a" });
+    const body = JSON.parse(fetchMock.mock.calls[1][1].body); const payload = SuperJSON.deserialize(body.json) as { note: string; accountId: string };
+    expect(fetchMock.mock.calls[1][0]).toBe("https://pharma.example/api/trpc/ai.callAssist.generate"); expect(payload).toEqual({ note: "Freeform field note", accountId: "account-a" });
+  });
 });

@@ -107,3 +107,21 @@
 - [x] Add procedure-level tests for content review, campaign queue/dispatch, and immutable content-usage evidence.
 - [x] Add native rep transport coverage for approved-content retrieval and presentation evidence submission.
 - [x] Save the validated marketing and approved-content release checkpoint.
+- [x] Assess hosted-model and self-hosted GPU deployment requirements, model routing, and sensitive-data defaults.
+- [x] Define and migrate tenant-scoped AI model policy, invocation audit, call-assist draft, and next-best-action evidence records.
+- [x] Implement the secure multi-provider model gateway with tenant/task policy routing and local-model defaults for sensitive tenants.
+- [x] Implement AI call-note structuring into reviewable visit-log fields without direct compliance-record mutation.
+- [x] Implement an explainable next-best-action engine using visit recency, account tier, and available sales/prescribing indicators.
+- [x] Build the governed AI call-assistant and next-best-action web/rep experiences.
+- [x] Add direct tests for AI tenant isolation, policy routing, structured-output validation, and prioritization evidence.
+- [x] Verify AI workflows, tenant boundaries, and role-guarded route access for AI Layer Part 1.
+- [ ] Save the API-free AI Layer Part 1 release checkpoint.
+- [x] Add the optional self-hosted GPU inference profile and operator configuration for the local-model route.
+- [x] Stabilize the existing HR payroll authorization contract under the expanded full-suite workload.
+- [x] Add secure dictated-note capture, temporary object storage, and transcription input for the call assistant.
+- [x] Extend the native rep client with typed note structuring and next-best-action retrieval.
+- [x] Expose reviewable AI sample mentions in the call-assistant experience and require explicit immutable sample checkout, rather than creating unverified sample evidence from an AI draft.
+- [x] Add direct next-best-action procedure tests for tenant isolation, generated snapshots, and audit evidence.
+- [x] Remove external hosted-provider API activation and live credential validation from the current AI Layer scope.
+- [x] Add a direct cross-tenant next-best-action procedure test proving generation evidence remains in the active tenant.
+- [x] Add a direct next-best-action listing isolation test proving callers cannot read evidence outside the active tenant.

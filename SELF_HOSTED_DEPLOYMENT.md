@@ -32,6 +32,8 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `OSM_TILE_BACKEND` | Internal URL of the organization’s self-hosted OpenStreetMap tile service | `http://tiles:8080/` |
 | `OSRM_BASE_URL` | Internal URL of the self-hosted OSRM service | `http://osrm:5000` |
 | `OSRM_DATA_DIR` / `OSRM_DATASET` | Host directory and prepared regional OSRM dataset name | `./osrm-data` / `region-latest.osrm` |
+| `AI_LOCAL_MODEL_BASE_URL` / `AI_LOCAL_MODEL_API_KEY` | Private OpenAI-compatible inference endpoint and access key | `http://local-ai:8000` / private secret |
+| `AI_LOCAL_MODEL_MODEL` | Open-weight model served by the optional GPU profile | `Qwen/Qwen2.5-7B-Instruct` |
 
 ## Self-Hosted Map Tiles
 
@@ -40,6 +42,10 @@ The GPS Operations map intentionally requests tiles through the relative path `/
 ## Self-Hosted OSRM Routing
 
 The Compose stack includes a private **OSRM** service used only by the application container. Before starting it, place a regional OpenStreetMap `.osm.pbf` extract into `OSRM_DATA_DIR` and prepare the dataset on the VPS using the same OSRM image: `osrm-extract -p /opt/car.lua /data/<region>.osm.pbf`, followed by `osrm-partition /data/<region>.osrm` and `osrm-customize /data/<region>.osrm`. Set `OSRM_DATASET` to the generated `.osrm` base filename, then start the stack. The API preserves priority groups (critical through low) and sends each group to OSRM’s trip service; it gracefully returns a Haversine fallback when the private routing service is unavailable.
+
+## Private AI Inference
+
+The `local-ai` Compose profile is an optional **GPU-only** OpenAI-compatible vLLM service. On a VPS with the NVIDIA Container Toolkit installed, set a private `AI_LOCAL_MODEL_API_KEY`, select an approved Llama/Qwen-class model in `AI_LOCAL_MODEL_MODEL`, then run `docker compose --profile local-ai up -d`. The service remains on the private Docker network and is not published through Nginx. AI tenant policies marked `sensitive` always select this local route, even when a hosted provider is configured as the tenant default. If the service is unavailable, the application blocks the sensitive request rather than falling back to a hosted model.
 
 ## MySQL Geospatial Architecture
 

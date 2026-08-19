@@ -12,6 +12,8 @@ services:
       APP_URL: ${APP_URL:-http://localhost}
       OSRM_BASE_URL: ${OSRM_BASE_URL:-http://osrm:5000}
       ROUTING_TIMEOUT_MS: ${ROUTING_TIMEOUT_MS:-5000}
+      AI_LOCAL_MODEL_BASE_URL: ${AI_LOCAL_MODEL_BASE_URL:-http://local-ai:8000}
+      AI_LOCAL_MODEL_API_KEY: ${AI_LOCAL_MODEL_API_KEY:-}
     depends_on:
       mysql:
         condition: service_healthy
@@ -50,6 +52,26 @@ services:
     networks:
       - private
 
+  local-ai:
+    image: vllm/vllm-openai:latest
+    profiles: ["local-ai"]
+    restart: unless-stopped
+    command: --model ${AI_LOCAL_MODEL_MODEL:?set AI_LOCAL_MODEL_MODEL} --max-model-len ${AI_LOCAL_MODEL_MAX_LEN:-8192}
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      VLLM_API_KEY: ${AI_LOCAL_MODEL_API_KEY:-}
+    volumes:
+      - model_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - private
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -71,3 +93,4 @@ networks:
 
 volumes:
   mysql_data:
+  model_cache:

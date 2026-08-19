@@ -10,6 +10,7 @@ import { trackingRouter } from "./routers/tracking";
 import { routingRouter } from "./routers/routing";
 import { hrRouter } from "./routers/hr";
 import { marketingRouter } from "./routers/marketing";
+import { aiRouter } from "./routers/ai";
 
 export const appRouter = router({
   system: systemRouter,
@@ -23,6 +24,7 @@ export const appRouter = router({
   routing: routingRouter,
   hr: hrRouter,
   marketing: marketingRouter,
+  ai: aiRouter,
 });
 
 export type AppRouter = typeof appRouter;
