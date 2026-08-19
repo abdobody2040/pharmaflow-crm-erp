@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature,
-  KanbanSquare, LayoutDashboard, LogOut, MapPinned, Menu, Settings, ShieldCheck, UsersRound,
+  KanbanSquare, LayoutDashboard, LogOut, MapPinned, Menu, Route, Settings, ShieldCheck, UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -14,6 +14,7 @@ type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; rol
 const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Workspace", items: [{ label: "Command Center", path: "/", icon: LayoutDashboard }] },
   { title: "Rep Tools", items: [{ label: "My Field Day", path: "/rep", icon: Activity, roles: ["admin", "manager", "rep"] }] },
+  { title: "Routing", items: [{ label: "Daily Routes", path: "/routes", icon: Route, roles: ["admin", "manager", "rep"] }] },
   { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },
   { title: "Core CRM", items: [

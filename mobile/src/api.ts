@@ -14,5 +14,6 @@ export async function mobileSignIn(apiBaseUrl: string, email: string, password: 
 export async function beginShiftSession(apiBaseUrl: string, accessToken: string, plannedStops: Array<{ latitude: number; longitude: number }> = []): Promise<MobileSession> {
   const consent = await mutation<{ id: string }>(apiBaseUrl, "rep.shift.consent", { policyVersion: "rep-location-v1", retentionDays: 90 }, accessToken);
   const shift = await mutation<{ id: string }>(apiBaseUrl, "rep.shift.start", { consentId: consent.id }, accessToken);
-  const session = { shiftId: shift.id, accessToken, apiBaseUrl, plannedStops }; await writeMobileSession(session); return session;
+  const route = await mutation<{ stops: Array<{ latitude: number; longitude: number; accountName: string; sequence: number }> }>(apiBaseUrl, "routing.mobileDaily", { date: new Date() }, accessToken);
+  const session = { shiftId: shift.id, accessToken, apiBaseUrl, plannedStops: route.stops.length ? route.stops : plannedStops.map((stop, index) => ({ ...stop, accountName: `Stop ${index + 1}`, sequence: index + 1 })) }; await writeMobileSession(session); return session;
 }

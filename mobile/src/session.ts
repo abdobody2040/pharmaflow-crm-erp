@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const key = "pharmaflow-mobile-session";
-export type MobileSession = { shiftId: string; accessToken: string; apiBaseUrl: string; plannedStops: Array<{ latitude: number; longitude: number }> };
+export type MobileSession = { shiftId: string; accessToken: string; apiBaseUrl: string; plannedStops: Array<{ latitude: number; longitude: number; accountName: string; sequence: number }> };
 
 export async function readMobileSession(): Promise<MobileSession | null> {
   const stored = await AsyncStorage.getItem(key); if (!stored) return null;

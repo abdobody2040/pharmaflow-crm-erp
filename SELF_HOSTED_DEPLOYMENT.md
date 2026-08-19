@@ -30,10 +30,16 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `PUBLIC_HTTP_PORT` | Host port published by Nginx | `80` |
 | `APP_URL` | Canonical public application URL | `https://crm.example.com` |
 | `OSM_TILE_BACKEND` | Internal URL of the organization’s self-hosted OpenStreetMap tile service | `http://tiles:8080/` |
+| `OSRM_BASE_URL` | Internal URL of the self-hosted OSRM service | `http://osrm:5000` |
+| `OSRM_DATA_DIR` / `OSRM_DATASET` | Host directory and prepared regional OSRM dataset name | `./osrm-data` / `region-latest.osrm` |
 
 ## Self-Hosted Map Tiles
 
 The GPS Operations map intentionally requests tiles through the relative path `/tiles/{z}/{x}/{y}.png`. Nginx proxies that path to `OSM_TILE_BACKEND`, keeping the map free of public tile-provider dependencies. Operate a tile server inside the same private network or VPS environment, set `OSM_TILE_BACKEND` in `.env`, and verify that `https://<host>/tiles/0/0/0.png` returns a tile before enabling the production map. The tile service is infrastructure operated by the customer; it is not part of the application’s three-service Compose stack.
+
+## Self-Hosted OSRM Routing
+
+The Compose stack includes a private **OSRM** service used only by the application container. Before starting it, place a regional OpenStreetMap `.osm.pbf` extract into `OSRM_DATA_DIR` and prepare the dataset on the VPS using the same OSRM image: `osrm-extract -p /opt/car.lua /data/<region>.osm.pbf`, followed by `osrm-partition /data/<region>.osrm` and `osrm-customize /data/<region>.osrm`. Set `OSRM_DATASET` to the generated `.osrm` base filename, then start the stack. The API preserves priority groups (critical through low) and sends each group to OSRM’s trip service; it gracefully returns a Haversine fallback when the private routing service is unavailable.
 
 ## MySQL Geospatial Architecture
 

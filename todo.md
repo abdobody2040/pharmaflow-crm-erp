@@ -70,3 +70,12 @@
 - [x] Add direct tracking tenant-isolation, trip-mileage, and geofence state-transition tests.
 - [x] Save the final validated GPS tracking checkpoint.
 - [x] Add a direct tracking procedure test proving tenant-A cannot access tenant-B telemetry.
+- [x] Define the self-hosted OSRM data, service, and deployment contract for priority-aware daily routes.
+- [x] Implement tenant-scoped daily route retrieval, priority ordering, OSRM optimization, and safe routing fallback APIs.
+- [x] Add OSRM service configuration and operator documentation to the self-hosted deployment stack.
+- [x] Build the administrator route preview and mobile turn-by-turn navigation hand-off.
+- [x] Test priority ordering, route service fallback, tenant isolation, and waypoint generation.
+- [x] Verify the route workflows and save the routing checkpoint.
+- [x] Add direct waypoint sequence and mobile navigation hand-off URL contract coverage.
+- [x] Verify the mobile optimized-next-stop and external maps hand-off flow.
+- [x] Save the final validated OSRM routing checkpoint.

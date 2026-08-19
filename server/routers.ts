@@ -7,6 +7,7 @@ import { platformRouter } from "./routers/platform";
 import { crmRouter } from "./routers/crm";
 import { repRouter } from "./routers/rep";
 import { trackingRouter } from "./routers/tracking";
+import { routingRouter } from "./routers/routing";
 
 export const appRouter = router({
   system: systemRouter,
@@ -17,6 +18,7 @@ export const appRouter = router({
   crm: crmRouter,
   rep: repRouter,
   tracking: trackingRouter,
+  routing: routingRouter,
 });
 
 export type AppRouter = typeof appRouter;
