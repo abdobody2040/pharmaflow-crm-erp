@@ -130,4 +130,4 @@
 - [x] Restore hosted-provider environment template and Docker Compose configuration for self-hosted customer deployments.
 - [x] Add adapter and policy-routing tests for OpenAI, Anthropic, Gemini, and local-model routes.
 - [x] Verify the restored multi-provider gateway, provider adapter contracts, and role-guarded control-center route.
-- [ ] Save the customer-key multi-provider gateway checkpoint.
+- [x] Save the customer-key multi-provider gateway checkpoint.
