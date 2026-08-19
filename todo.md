@@ -131,3 +131,15 @@
 - [x] Add adapter and policy-routing tests for OpenAI, Anthropic, Gemini, and local-model routes.
 - [x] Verify the restored multi-provider gateway, provider adapter contracts, and role-guarded control-center route.
 - [x] Save the customer-key multi-provider gateway checkpoint.
+- [x] Assess tenant-safe analytics query boundaries, model behavior, and anomaly schedule architecture.
+- [x] Define and migrate tenant-scoped analytics query history, anomaly alert, and alert-review records.
+- [x] Add chart rendering to the governed semantic analytics workspace alongside the completed table responses.
+- [x] Implement scheduled sample, expense, and GPS territory anomaly detection with tenant-scoped deduplication.
+- [x] Complete manager alert lifecycle controls with dismiss, reopen, and review-note capture.
+- [x] Add executable procedure-level coverage for analytics tenant isolation, anomaly deduplication, and alert-review authorization.
+- [x] Add an isolated analytics router caller test for manager-only alert review authorization.
+- [x] Add seeded tenant-A versus tenant-B fixture coverage for analytics history and alert listing isolation.
+- [x] Add persistence-level daily anomaly deduplication coverage proving a second scan does not insert the same alert.
+- [x] Verify conversational analytics, daily anomaly monitoring, tenant boundaries, alert lifecycles, and visual workflows.
+- [ ] Save the AI Layer Part 2 analytics release checkpoint.
+- [x] Configure the daily deterministic anomaly monitor cadence and retain a future threshold-tuning path.
