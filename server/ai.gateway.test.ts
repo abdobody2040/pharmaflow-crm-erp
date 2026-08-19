@@ -9,10 +9,10 @@ describe("AI gateway policy routing", () => {
     expect(route).toEqual({ provider: "local", model: "Qwen/Qwen2.5-7B-Instruct" });
   });
 
-  it("honors an explicit private-local route and converts legacy hosted routes to the built-in route", () => {
+  it("honors explicit private-local and customer-key hosted task routes for a standard tenant", () => {
     const local = resolveAiRoute({ dataSensitivity: "standard", defaultProvider: "manus", defaultModel: "gpt-5-mini", localModel: "Qwen/Qwen2.5-7B-Instruct", taskRoutes: { call_assist: { provider: "local", model: "Qwen/Qwen2.5-7B-Instruct" } } }, "call_assist");
     const legacy = resolveAiRoute({ dataSensitivity: "standard", defaultProvider: "manus", defaultModel: "gpt-5-mini", localModel: null, taskRoutes: { call_assist: { provider: "gemini", model: "gemini-3-flash-preview" } } } as any, "call_assist");
-    expect(local).toEqual({ provider: "local", model: "Qwen/Qwen2.5-7B-Instruct" }); expect(legacy).toEqual({ provider: "manus", model: "gemini-3-flash-preview" });
+    expect(local).toEqual({ provider: "local", model: "Qwen/Qwen2.5-7B-Instruct" }); expect(legacy).toEqual({ provider: "gemini", model: "gemini-3-flash-preview" });
   });
 });
 

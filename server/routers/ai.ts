@@ -11,7 +11,7 @@ import { callAssistOutputSchema, parseCallAssistDraft } from "../services/callAs
 import { rankNextBestActions } from "../services/nextBestAction";
 import { router, tenantRoleProcedure } from "../_core/trpc";
 
-const managerRoles = ["admin", "manager"] as const; const readerRoles = ["admin", "manager", "rep", "exec"] as const; const providers = ["local", "manus"] as const;
+const managerRoles = ["admin", "manager"] as const; const readerRoles = ["admin", "manager", "rep", "exec"] as const; const providers = ["openai", "anthropic", "gemini", "local", "manus"] as const;
 type Policy = typeof aiTenantPolicies.$inferSelect;
 async function policyForTenant(tenantId: string, userId: number): Promise<Policy> { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [existing] = await db.select().from(aiTenantPolicies).where(eq(aiTenantPolicies.tenantId, tenantId)).limit(1); if (existing) return existing; const id = randomUUID(); const values = { id, tenantId, dataSensitivity: "standard" as const, defaultProvider: "manus" as const, defaultModel: "gpt-5-mini", localModel: null, taskRoutes: {}, createdBy: userId }; await db.insert(aiTenantPolicies).values(values); return { ...values, status: "active", createdAt: new Date(), updatedAt: new Date() } as Policy; }
 async function accountForTenant(tenantId: string, accountId: string) { const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [row] = await db.select().from(accounts).where(and(eq(accounts.tenantId, tenantId), eq(accounts.id, accountId))).limit(1); if (!row) throw new Error("Account was not found in the active tenant"); return row; }

@@ -26,6 +26,7 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `MYSQL_USER` / `MYSQL_PASSWORD` | Least-privilege application credentials | Environment-specific secret |
 | `MYSQL_ROOT_PASSWORD` | Database administration credential | Separate long random secret |
 | `JWT_SECRET` | HMAC key for local JWT issuance and validation | 48-byte random value |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` | Optional customer-approved hosted-provider credentials | Leave each unused provider blank |
 | `APP_PORT` | Internal Node.js listener consumed by Nginx | `3000` |
 | `PUBLIC_HTTP_PORT` | Host port published by Nginx | `80` |
 | `APP_URL` | Canonical public application URL | `https://crm.example.com` |

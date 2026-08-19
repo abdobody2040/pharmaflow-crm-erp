@@ -125,3 +125,9 @@
 - [x] Remove external hosted-provider API activation and live credential validation from the current AI Layer scope.
 - [x] Add a direct cross-tenant next-best-action procedure test proving generation evidence remains in the active tenant.
 - [x] Add a direct next-best-action listing isolation test proving callers cannot read evidence outside the active tenant.
+- [x] Restore OpenAI, Anthropic, and Gemini provider adapters with customer-supplied API-key configuration.
+- [x] Restore hosted-provider selection in the tenant AI policy control center while retaining sensitive-tenant local defaults.
+- [x] Restore hosted-provider environment template and Docker Compose configuration for self-hosted customer deployments.
+- [x] Add adapter and policy-routing tests for OpenAI, Anthropic, Gemini, and local-model routes.
+- [x] Verify the restored multi-provider gateway, provider adapter contracts, and role-guarded control-center route.
+- [ ] Save the customer-key multi-provider gateway checkpoint.
