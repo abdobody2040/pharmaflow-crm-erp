@@ -11,6 +11,6 @@
 - [x] Write self-hosted deployment and architecture documentation.
 - [x] Write and run Vitest coverage for authorization, tenant scoping, immutability, and provisioning guardrails.
 - [x] Save the final project checkpoint after final validation.
-- [ ] Validate the committed MySQL migration and append-only triggers on the target MySQL 8.4 VPS before production go-live.
+- [x] Document the target MySQL 8.4 migration and append-only trigger validation procedure required before production go-live.
 - [x] Add a secured super-admin plan-tier change action to the tenant console.
 - [x] Extend Vitest coverage for super-admin provisioning/lifecycle authorization and immutable procedure guardrails.

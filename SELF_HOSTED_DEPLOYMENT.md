@@ -30,6 +30,12 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `PUBLIC_HTTP_PORT` | Host port published by Nginx | `80` |
 | `APP_URL` | Canonical public application URL | `https://crm.example.com` |
 
+## Production MySQL 8.4 Validation
+
+Before production go-live, run the migration from the application container with `docker compose exec app pnpm drizzle-kit migrate`. Then verify that MySQL registered the immutable-record guards using `docker compose exec mysql mysql -u root -p -e "USE <MYSQL_DATABASE>; SHOW TRIGGERS;"`. The result must include two triggers—one `BEFORE UPDATE` and one `BEFORE DELETE`—for each of `auditEvents`, `visitLogs`, `sampleTransactions`, and `electronicSignatures`.
+
+Use a controlled non-production tenant record on the target MySQL instance to execute negative tests. First select one identifier from each affected table. Then issue an `UPDATE` and a `DELETE` against that identifier inside a disposable verification session. MySQL must reject every operation with the configured append-only message; roll back or discard the controlled data afterward. Record the migration output, trigger listing, rejection results, server timestamp/NTP status, image version, and operator identity in the deployment qualification evidence. Do not perform these negative tests against live regulated records.
+
 ## Compliance Architecture Boundary
 
 The foundation applies strict application-side tenant predicates and role checks before tenant queries. Global super-admin operations use a separate procedure class and do not grant a tenant user cross-tenant access. Regulated visit logs, sample transactions, electronic signatures, and audit events have no update or deletion procedures. Corrections must use a newly inserted superseding or compensating record, while employee and tenant removal is represented by a lifecycle status transition plus a hash-linked audit event.
