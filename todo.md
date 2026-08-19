@@ -143,3 +143,9 @@
 - [x] Verify conversational analytics, daily anomaly monitoring, tenant boundaries, alert lifecycles, and visual workflows.
 - [x] Save the AI Layer Part 2 analytics release checkpoint.
 - [x] Configure the daily deterministic anomaly monitor cadence and retain a future threshold-tuning path.
+- [x] Assess tenant-safe BI metrics, role-specific dashboard scopes, and PDF/XLSX export architecture.
+- [ ] Complete rep target, manager heatmap/target-achievement, fleet mileage/utilization, and expanded executive KPI aggregations.
+- [x] Implement consistent protected PDF and XLSX report exports for each BI dashboard.
+- [ ] Make BI dashboard defaults, selectors, loading/error states, and views role-aware and complete.
+- [ ] Add direct BI procedure tests for tenant isolation, role routing, and KPI calculations alongside export shape tests.
+- [ ] Verify BI dashboards and exports, then save the BI reporting checkpoint.
