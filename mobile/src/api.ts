@@ -7,6 +7,14 @@ async function mutation<T>(apiBaseUrl: string, path: string, input: unknown, tok
   return decodeTrpcResult<T>(envelope);
 }
 
+async function query<T>(apiBaseUrl: string, path: string, input: unknown, token?: string): Promise<T> {
+  const url = `${apiBaseUrl.replace(/\/$/, "")}/api/trpc/${path}?input=${encodeURIComponent(encodeTrpcInput(input))}`;
+  const response = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const envelope = await response.json() as TrpcEnvelope<unknown>;
+  if (!response.ok || envelope.error) throw new Error(envelope.error?.json?.message ?? "Request failed");
+  return decodeTrpcResult<T>(envelope);
+}
+
 export async function mobileSignIn(apiBaseUrl: string, email: string, password: string, tenantSlug?: string) {
   return mutation<{ token: string; user: { id: number; tenantId: string | null } }>(apiBaseUrl, "auth.localLogin", { email, password, tenantSlug: tenantSlug || undefined });
 }
@@ -17,3 +25,7 @@ export async function beginShiftSession(apiBaseUrl: string, accessToken: string,
   const route = await mutation<{ stops: Array<{ latitude: number; longitude: number; accountName: string; sequence: number }> }>(apiBaseUrl, "routing.mobileDaily", { date: new Date() }, accessToken);
   const session = { shiftId: shift.id, accessToken, apiBaseUrl, plannedStops: route.stops.length ? route.stops : plannedStops.map((stop, index) => ({ ...stop, accountName: `Stop ${index + 1}`, sequence: index + 1 })) }; await writeMobileSession(session); return session;
 }
+
+export type MobileApprovedContent = { id: string; title: string; description: string | null; contentType: "pdf" | "image" | "video" | "html" | "link"; body: string | null; assetUrl: string | null; version: string };
+export async function getApprovedContent(apiBaseUrl: string, accessToken: string) { return query<MobileApprovedContent[]>(apiBaseUrl, "marketing.content.list", undefined, accessToken); }
+export async function recordMobileContentUsage(apiBaseUrl: string, accessToken: string, input: { contentId: string; accountId: string; plannedVisitId?: string }) { return mutation<{ id: string }>(apiBaseUrl, "marketing.usage.record", { ...input, eventType: "presented", occurredAt: new Date() }, accessToken); }

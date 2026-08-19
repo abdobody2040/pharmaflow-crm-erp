@@ -9,6 +9,7 @@ import { repRouter } from "./routers/rep";
 import { trackingRouter } from "./routers/tracking";
 import { routingRouter } from "./routers/routing";
 import { hrRouter } from "./routers/hr";
+import { marketingRouter } from "./routers/marketing";
 
 export const appRouter = router({
   system: systemRouter,
@@ -21,6 +22,7 @@ export const appRouter = router({
   tracking: trackingRouter,
   routing: routingRouter,
   hr: hrRouter,
+  marketing: marketingRouter,
 });
 
 export type AppRouter = typeof appRouter;

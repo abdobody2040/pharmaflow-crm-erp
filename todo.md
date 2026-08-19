@@ -94,3 +94,16 @@
 - [x] Expose department and territory editing controls within tenant-scoped HR employee records.
 - [x] Add procedure-level HR tests for tenant-boundary checks and HR lifecycle mutations.
 - [x] Save the final ERP/HR checkpoint after the completed procedure validation pass.
+- [x] Define tenant-scoped marketing campaign, audience segment, approved-content, delivery, and content-usage data models.
+- [x] Generate and apply the MySQL migration for marketing and approved-content records.
+- [x] Implement role-gated marketing procedures for campaigns, CRM-attribute audience segmentation, approved content, delivery staging, and immutable usage analytics.
+- [x] Prepare secure configuration boundaries for email, SMS, and WhatsApp Business Cloud API delivery integrations.
+- [x] Build the tenant-scoped marketing campaign and approved-content administration workspace.
+- [x] Extend the mobile rep experience to browse, present, and record approved HCP content usage.
+- [x] Add direct tests for marketing tenant isolation, role gates, campaign delivery rules, content approval, and immutable usage evidence.
+- [x] Verify the marketing workflows and save the marketing/content checkpoint.
+- [x] Add development-only placeholder channel configuration and validate that it cannot be used for live delivery.
+- [x] Add approved-content workspace upload controls for PDF, image, and video CLM assets.
+- [x] Add procedure-level tests for content review, campaign queue/dispatch, and immutable content-usage evidence.
+- [x] Add native rep transport coverage for approved-content retrieval and presentation evidence submission.
+- [x] Save the validated marketing and approved-content release checkpoint.
