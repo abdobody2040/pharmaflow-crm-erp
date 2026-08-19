@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1787138864323,
+      "tag": "0000_faithful_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1787139238167,
+      "tag": "0001_cultured_titania",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787139384648,
+      "tag": "0002_tearful_madelyne_pryor",
+      "breakpoints": true
+    }
+  ]
 }

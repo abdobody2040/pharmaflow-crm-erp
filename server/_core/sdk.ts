@@ -296,8 +296,8 @@ class SDKServer {
         await db.upsertUser({
           openId: userInfo.openId,
           name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          email: userInfo.email ?? undefined,
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? "platform_jwt",
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
@@ -335,16 +335,23 @@ function buildCronUser(
   return {
     id: -1,
     openId: userInfo.openId,
+    tenantId: null,
     name: userInfo.name || "Manus Scheduled Task",
-    email: null,
-    loginMethod: null,
-    role: "user",
+    email: "cron@pharmaflow.local",
+    passwordHash: null,
+    loginMethod: "cron_jwt",
+    role: "super_admin",
+    department: null,
+    territory: null,
+    hireDate: null,
+    status: "active",
     createdAt: now,
     updatedAt: now,
+    createdBy: null,
     lastSignedIn: now,
     taskUid: userInfo.taskUid ?? undefined,
     isCron: true,
-  } as AuthenticatedUser;
+  };
 }
 
 export const sdk = new SDKServer();
