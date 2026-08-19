@@ -14,6 +14,7 @@ type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; rol
 const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Workspace", items: [{ label: "Command Center", path: "/", icon: LayoutDashboard }] },
   { title: "Rep Tools", items: [{ label: "My Field Day", path: "/rep", icon: Activity, roles: ["admin", "manager", "rep"] }] },
+  { title: "People", items: [{ label: "ERP / HR", path: "/hr", icon: UsersRound, roles: ["admin", "manager", "rep", "hr"] }] },
   { title: "Routing", items: [{ label: "Daily Routes", path: "/routes", icon: Route, roles: ["admin", "manager", "rep"] }] },
   { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },

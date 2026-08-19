@@ -79,3 +79,18 @@
 - [x] Add direct waypoint sequence and mobile navigation hand-off URL contract coverage.
 - [x] Verify the mobile optimized-next-stop and external maps hand-off flow.
 - [x] Save the final validated OSRM routing checkpoint.
+- [x] Define tenant-scoped HR schema for attendance, leave, expenses, approvals, receipts, and payroll export data.
+- [x] Implement GPS/geofence-backed attendance check-in and immutable HR audit procedures.
+- [x] Implement leave and expense submission, review, approval, and status-only lifecycle procedures.
+- [x] Add receipt photo upload metadata and secure storage integration for expense evidence.
+- [x] Build employee, attendance, leave, expense, and payroll-export administration screens.
+- [x] Add CSV/XLSX payroll export generation for authorized administrators.
+- [x] Test HR role gates, tenant isolation, attendance eligibility, approval transitions, and export shape.
+- [x] Add audited automatic attendance from accepted GPS events for both office and territory geofences.
+- [x] Complete status-only leave cancellation and expense reimbursement lifecycle transitions.
+- [x] Add employee records management within the HR workspace.
+- [x] Add direct HR tests for tenant isolation, GPS attendance outcomes, lifecycle transitions, and payroll output shapes.
+- [x] Verify the ERP/HR workflows and save the ERP/HR checkpoint.
+- [x] Expose department and territory editing controls within tenant-scoped HR employee records.
+- [x] Add procedure-level HR tests for tenant-boundary checks and HR lifecycle mutations.
+- [ ] Save the final ERP/HR checkpoint after the completed procedure validation pass.

@@ -1,0 +1,1 @@
+ALTER TABLE `geofences` MODIFY COLUMN `geofenceType` enum('territory','office','hcp_stop') NOT NULL;

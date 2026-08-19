@@ -11,7 +11,7 @@ export const haversineMeters = (from: { latitude: number; longitude: number }, t
   const dLat = radians(to.latitude - from.latitude); const dLon = radians(to.longitude - from.longitude); const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(from.latitude)) * Math.cos(radians(to.latitude)) * Math.sin(dLon / 2) ** 2; return 6371000 * 2 * Math.asin(Math.sqrt(a));
 };
 export const isIdlePair = (distanceMeters: number, elapsedSeconds: number) => distanceMeters <= IDLE_DISTANCE_METERS && elapsedSeconds >= IDLE_WINDOW_SECONDS;
-export const geofenceTransition = (geofenceType: "territory" | "hcp_stop", inside: boolean) => geofenceType === "territory" ? (inside ? "enter" : "exit") : (inside ? "near" : "far");
+export const geofenceTransition = (geofenceType: "territory" | "office" | "hcp_stop", inside: boolean) => geofenceType === "territory" ? (inside ? "enter" : "exit") : (inside ? "near" : "far");
 
 export async function evaluateLocationGeofences(scope: TenantScope, location: { id: string; shiftId: string; latitude: number; longitude: number; capturedAt: Date }) {
   const db = await getDb(); if (!db) return [];
