@@ -141,5 +141,5 @@
 - [x] Add seeded tenant-A versus tenant-B fixture coverage for analytics history and alert listing isolation.
 - [x] Add persistence-level daily anomaly deduplication coverage proving a second scan does not insert the same alert.
 - [x] Verify conversational analytics, daily anomaly monitoring, tenant boundaries, alert lifecycles, and visual workflows.
-- [ ] Save the AI Layer Part 2 analytics release checkpoint.
+- [x] Save the AI Layer Part 2 analytics release checkpoint.
 - [x] Configure the daily deterministic anomaly monitor cadence and retain a future threshold-tuning path.
