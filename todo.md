@@ -179,3 +179,9 @@
 - [x] Add locally runnable Playwright web E2E coverage and GPS mocks; retain device E2E as a documented staging dependency.
 - [x] Complete NTP, MySQL backup/restore, DAST, and distributed-rate-limit runbooks without claiming unexecuted operational proof.
 - [x] Update the Arabic full-system review so unavailable staging evidence remains explicitly marked as deferred.
+- [x] Audit priority page strings and authentication hooks for Arabic/English coverage and authenticated browser testing.
+- [x] Audit priority page strings and authentication hooks for Arabic/English coverage and authenticated browser testing.
+- [x] Expand Arabic/English localization across the shared shell, sign-in, overview, operations, BI, and shared legacy-page catalog with RTL-aware behavior.
+- [x] Add disposable authenticated web E2E fixtures and critical role-safe browser scenarios.
+- [x] Document Android and iOS emulator/device execution harnesses without claiming unavailable device execution.
+- [x] Validate and save the localization and authenticated-E2E foundation update.

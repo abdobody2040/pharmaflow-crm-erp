@@ -5,6 +5,13 @@ test("the protected web application redirects unauthenticated users to its sign-
   await expect(page.locator("body")).toContainText(/sign in|login|continue/i);
 });
 
+test("the pre-authentication language switch applies Arabic copy and RTL direction", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "العربية" }).click();
+  await expect(page.getByText("مرحباً بعودتك")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+});
+
 test("browser GPS can be deterministically mocked for local field-workflow tests", async ({ browser }) => {
   const context = await browser.newContext({ permissions: ["geolocation"], geolocation: { latitude: 30.0444, longitude: 31.2357, accuracy: 5 } });
   const page = await context.newPage();
