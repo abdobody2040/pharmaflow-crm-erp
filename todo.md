@@ -161,3 +161,21 @@
 - [x] Finalize super-admin tenant provisioning, status lifecycle, and operator visibility controls.
 - [x] Update the single-VPS Docker Compose deployment runbook and multi-tenant operations guidance.
 - [x] Add security and tenant-boundary regression coverage, validate the system, and save the hardening release checkpoint.
+- [x] Inventory every PRD feature, module, backend procedure, UI route, and existing validation artifact for the full-system review.
+- [x] Verify representative end-to-end user flows and trace module-to-module integrations, noting evidence and limitations.
+- [x] Review tenant isolation, immutable compliance evidence, RBAC, input validation, authentication, and rate-limit controls across system surfaces.
+- [x] Benchmark covered functionality and material gaps against Veeva and Salesforce core capabilities using authoritative sources.
+- [x] Assess representative GPS/map and dashboard performance characteristics without fabricating production-scale results.
+- [x] Produce and deliver the structured Arabic full-system review report with status, evidence, risks, and prioritized fixes.
+- [x] Establish reproducible performance, E2E, compliance-operation, and distributed-security test boundaries without fabricating unavailable environment results.
+- [ ] Deferred until an approved staging MySQL dataset is available: execute representative tenant-scoped dashboard and GPS/geofence benchmarks and add only evidence-based index changes.
+- [x] Add a locally runnable web E2E suite and document the required Android/iOS emulator test harness for mobile offline/GPS validation.
+- [x] Create executable compliance-operation and API security validation runbooks for NTP, MySQL backup/restore, DAST, and multi-instance distributed rate limiting.
+- [x] Add MVP forecasting, procurement, fleet maintenance/fuel, events, coaching, and Arabic/English localization foundations in prioritized increments.
+- [x] Re-run the full-system review after each major remediation increment and publish evidence-backed status changes.
+- [x] Deliver tenant-safe forecasting and procurement MVP workflows with schemas, procedures, interfaces, and tests.
+- [x] Deliver fleet maintenance/fuel, events/webinars, and manager coaching MVP workflows with schemas, procedures, interfaces, and tests.
+- [x] Deliver Arabic/English UI localization foundations with RTL-aware layout support.
+- [x] Add locally runnable Playwright web E2E coverage and GPS mocks; retain device E2E as a documented staging dependency.
+- [x] Complete NTP, MySQL backup/restore, DAST, and distributed-rate-limit runbooks without claiming unexecuted operational proof.
+- [x] Update the Arabic full-system review so unavailable staging evidence remains explicitly marked as deferred.

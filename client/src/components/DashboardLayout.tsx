@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { useLocation } from "wouter";
 import LoginPage from "@/pages/Login";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type MenuItem = { label: string; path: string; icon: typeof LayoutDashboard; roles?: string[] };
 
@@ -18,7 +19,7 @@ const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Engagement", items: [{ label: "Marketing & CLM", path: "/marketing", icon: Megaphone, roles: ["admin", "manager", "exec"] }] },
   { title: "Intelligence", items: [{ label: "AI Control Center", path: "/ai", icon: Sparkles, roles: ["admin", "manager"] }, { label: "Analytics & Alerts", path: "/analytics", icon: BarChart3, roles: ["admin", "manager", "exec"] }, { label: "BI Dashboards", path: "/bi", icon: BarChart3, roles: ["admin", "manager", "rep", "exec"] }] },
   { title: "Routing", items: [{ label: "Daily Routes", path: "/routes", icon: Route, roles: ["admin", "manager", "rep"] }] },
-  { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }] },
+  { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }, { label: "Operations Expansion", path: "/operations", icon: ClipboardList, roles: ["admin", "manager", "rep", "hr", "exec"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },
   { title: "Core CRM", items: [
     { label: "Accounts & HCPs", path: "/crm/accounts", icon: Building2, roles: ["admin", "manager", "rep", "exec"] },
@@ -44,13 +45,15 @@ function initials(name: string | null | undefined) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { loading, user, logout } = useAuth();
+  const { language, toggleLanguage, t } = useLanguage();
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (loading) return <div className="min-h-screen bg-[#f6f7f9]" />;
   if (!user) return <LoginPage />;
 
-  const currentItem = sections.flatMap(section => section.items).find(item => item.path === location)?.label ?? "PharmaFlow";
+  const rawCurrentItem = sections.flatMap(section => section.items).find(item => item.path === location)?.label ?? "PharmaFlow";
+  const currentItem = rawCurrentItem === "Command Center" ? t("commandCenter") : rawCurrentItem === "Tenant Management" ? t("tenantManagement") : rawCurrentItem === "Compliance Review" ? t("complianceReview") : rawCurrentItem === "Operations Expansion" ? t("operations") : rawCurrentItem;
   const allowedSections = sections.map(section => ({
     ...section,
     items: section.items.filter(item => !item.roles || item.roles.includes(user.role)),
@@ -102,7 +105,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="sticky top-0 z-30 flex h-[78px] items-center border-b border-slate-200/80 bg-[#f6f7f9]/90 px-5 backdrop-blur-xl lg:px-9">
           <button onClick={() => setMobileOpen(true)} className="mr-4 rounded-lg p-2 text-slate-600 hover:bg-white lg:hidden"><Menu className="h-5 w-5" /></button>
           <div><p className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#7d8796]">PharmaFlow / {user.role === "super_admin" ? "Platform" : "Tenant"}</p><h1 className="mt-1 text-lg font-bold tracking-[-0.02em] text-[#172033]">{currentItem}</h1></div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-[#ccebdd] bg-[#eafaf4] px-3 py-1.5 text-xs font-semibold text-[#15745d]"><BadgeCheck className="h-4 w-4" /> Controls active</div>
+          <div className="ml-auto flex items-center gap-2"><button onClick={toggleLanguage} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm" aria-label="Change language">{t("language")}</button><div className="flex items-center gap-2 rounded-full border border-[#ccebdd] bg-[#eafaf4] px-3 py-1.5 text-xs font-semibold text-[#15745d]"><BadgeCheck className="h-4 w-4" /> {language === "ar" ? "الضوابط فعّالة" : "Controls active"}</div></div>
         </header>
         <div className="mx-auto max-w-[1560px] p-5 lg:p-9">{children}</div>
       </main>
