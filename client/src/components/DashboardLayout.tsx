@@ -2,8 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature,
-  BarChart3, KanbanSquare, Languages, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, Sparkles, UsersRound,
+  Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature, FileText, Cable,
+  BarChart3, KanbanSquare, Languages, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, Sparkles, UsersRound, Warehouse,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -19,7 +19,7 @@ const sections: Array<{ title: string; items: MenuItem[] }> = [
   { title: "Engagement", items: [{ label: "Marketing & CLM", path: "/marketing", icon: Megaphone, roles: ["admin", "manager", "exec"] }] },
   { title: "Intelligence", items: [{ label: "AI Control Center", path: "/ai", icon: Sparkles, roles: ["admin", "manager"] }, { label: "Analytics & Alerts", path: "/analytics", icon: BarChart3, roles: ["admin", "manager", "exec"] }, { label: "BI Dashboards", path: "/bi", icon: BarChart3, roles: ["admin", "manager", "rep", "exec"] }] },
   { title: "Routing", items: [{ label: "Daily Routes", path: "/routes", icon: Route, roles: ["admin", "manager", "rep"] }] },
-  { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }, { label: "Operations Expansion", path: "/operations", icon: ClipboardList, roles: ["admin", "manager", "rep", "hr", "exec"] }] },
+  { title: "Operations", items: [{ label: "GPS Operations", path: "/tracking", icon: MapPinned, roles: ["admin", "manager", "exec"] }, { label: "Operations Expansion", path: "/operations", icon: ClipboardList, roles: ["admin", "manager", "rep", "hr", "exec"] }, { label: "Warehouse Inventory", path: "/inventory", icon: Warehouse, roles: ["admin", "manager", "rep", "exec"] }] },
   { title: "Platform", items: [{ label: "Tenant Management", path: "/tenants", icon: Building2, roles: ["super_admin"] }] },
   { title: "Core CRM", items: [
     { label: "Accounts & HCPs", path: "/crm/accounts", icon: Building2, roles: ["admin", "manager", "rep", "exec"] },
@@ -36,7 +36,7 @@ const sections: Array<{ title: string; items: MenuItem[] }> = [
     { label: "Sample Transactions", path: "/samples", icon: Activity, roles: ["admin", "manager", "exec"] },
     { label: "E-Signatures", path: "/signatures", icon: FileSignature, roles: ["admin", "manager", "exec"] },
   ] },
-  { title: "Governance", items: [{ label: "Compliance Review", path: "/compliance", icon: ShieldCheck, roles: ["admin", "exec"] }, { label: "Terminology", path: "/terminology", icon: Settings, roles: ["admin", "manager"] }, { label: "Settings", path: "/settings", icon: Settings }] },
+  { title: "Governance", items: [{ label: "Compliance Review", path: "/compliance", icon: ShieldCheck, roles: ["admin", "exec"] }, { label: "Document Register", path: "/documents", icon: FileText, roles: ["admin", "manager", "hr", "exec"] }, { label: "Integrations", path: "/integrations", icon: Cable, roles: ["admin"] }, { label: "Terminology", path: "/terminology", icon: Settings, roles: ["admin", "manager"] }, { label: "Settings", path: "/settings", icon: Settings }] },
 ];
 
 function initials(name: string | null | undefined) {

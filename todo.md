@@ -193,3 +193,14 @@
 - [x] Confirm GitHub account access, repository owner, repository name, and visibility for source publication.
 - [x] Prepare the current validated project source and create a new GitHub repository.
 - [x] Verify the remote repository contents and deliver its URL.
+- [x] Repair the location-ping attendance test mock and prove automatic attendance is recorded through the GPS ingestion path.
+- [x] Add customer affiliations and a tenant-scoped Customer 360 account view with unified source data.
+- [x] Complete manager coaching scorecards and ride-along workflow evidence.
+- [x] Add general warehouse inventory sites, stock ledger, adjustments, reorder levels, and tenant-safe workflows.
+- [x] Add a simple tenant-scoped document register with versioning and retention metadata separate from CLM.
+- [x] Add a positive credential-confirmed electronic-signature test with verified record-binding hash evidence.
+- [x] Expand Arabic/English translations across remaining screens and error paths using the shared localization system.
+- [x] Review Prompt 14 MVP query paths for missing indexes and N+1 patterns; document only evidence-based changes.
+- [x] Build a self-hosted integration gateway MVP with versioned API keys and audited outbound webhook controls.
+- [x] Update the Arabic full-system review only with verified improvements; retain staging, macOS, and DAST evidence as deferred.
+- [x] Validate all delivered remediation work and save the release checkpoint.

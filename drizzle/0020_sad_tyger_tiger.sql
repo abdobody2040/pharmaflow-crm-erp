@@ -1,0 +1,1 @@
+CREATE INDEX `procurement_requests_tenant_creator_created_idx` ON `procurementRequests` (`tenantId`,`createdBy`,`createdAt`);

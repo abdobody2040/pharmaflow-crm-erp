@@ -1,186 +1,121 @@
-# تقرير المراجعة الشاملة لنظام PharmaFlow
+# تقرير المراجعة الشاملة لنظام PharmaFlow — تحديث المعالجة المحلية
 
-**تاريخ المراجعة:** 20 أغسطس 2026  
-**نطاق المراجعة:** CRM، تطبيق المندوبين والمزامنة، ERP/HR، Fleet/GPS والمسارات، التسويق وCLM، طبقة الذكاء الاصطناعي، التحليلات وBI، الـ Compliance، المنصة متعددة العملاء، والتشغيل على VPS.  
-**منهجية الإثبات:** مراجعة PRD والـ schema والـ routers والواجهات والوثائق واختبارات المشروع، ثم تنفيذ `pnpm check && pnpm test`. النتيجة: **36 ملف اختبار و94 اختباراً ناجحاً**. لا يساوي ذلك اختبار قبول كامل على أجهزة iOS/Android فعلية أو اختبار حمل على قاعدة بيانات كبيرة؛ تم توضيح هذه الحدود صراحةً بدلاً من افتراض نتائج غير مقاسة.
+**تاريخ التحديث:** 20 أغسطس 2026  
+**النطاق:** مراجعة الأدلة المتاحة محلياً بعد معالجة الفجوات القابلة للتحقق دون بيئة staging أو أجهزة iOS/Android فعلية.  
+**منهجية الإثبات:** مراجعة schema وtRPC routers والواجهات واختبارات Vitest، ثم تنفيذ `pnpm check && pnpm test`. النتيجة الحالية هي **43 ملف اختبار و103 اختبارات ناجحة**. لا تمثل هذه النتيجة benchmark أداء أو DAST أو قبولاً تشغيلياً كاملاً على أجهزة مادية.
 
-> **معاني الحالة:** ✅ مبني وله منطق خلفي واختبار أو دليل تشغيلي مناسب. ⚠️ مبني جزئياً أو تم التحقق منه على مستوى procedure/contract فقط ويحتاج إثباتاً أو توسعة. ❌ غير مبني ضمن الإصدار الحالي.
+> **معاني الحالة:** ✅ مبني ومغطى بدليل كود أو اختبار محلي محدد. ⚠️ مبني جزئياً أو يحتاج دليلاً تشغيلياً خارج البيئة الحالية. ❌ غير مبني ضمن النطاق الحالي. ولا تتحول أي حالة إلى ✅ لمجرد وجود واجهة بلا منطق خلفي واختبار.
 
 ## 1. الملخص التنفيذي
 
-المنصة تمتلك أساساً قوياً متعدد العملاء مع فصل tenant على مستوى الإجراءات والاستعلامات، وتغطي غالبية تدفقات المندوبين وإدارة العملاء والموارد البشرية وGPS والتسويق والـ BI والـ compliance. توجد أدلة آلية جيدة على RBAC، وعزل tenants، وسجلات الزيارات/العينات غير القابلة للحذف، والتقارير، والتحكم في HTTP. أهم الفجوات قبل إطلاق تجاري منظم هي **اختبارات E2E حقيقية للهاتف والمتصفح، قياس أداء على بيانات كبيرة، الميزات المتقدمة للمنافسين (forecasting، procurement، maintenance/fuel، events، coaching، multilingual)، وإثبات تشغيلي لإيجابية التوقيع الإلكتروني وNTP والنسخ الاحتياطي**.
+تمت معالجة البنود ذات الأولوية التي يمكن إثباتها محلياً. يشمل ذلك إصلاح اختبار الحضور التلقائي من مسار GPS، إكمال Customer 360 والعلاقات بين الحسابات، workflow المرافقة الميدانية وبطاقات تقييم المدير، مخزون المستودعات العام، سجل المستندات ذي الإصدارات، وإثبات التوقيع الإلكتروني الإيجابي. كما أضيفت طبقة تكامل ذاتية الاستضافة تضم مفاتيح API بإصدار `v1` وتخزين hash فقط، وwebhooks مضبوطة عبر HTTPS وسجل تسليم append-only.
 
-| المجال | التقييم | القراءة التنفيذية |
-|---|---:|---|
-| منطق الأعمال والـ APIs | ✅ | إجراءات tRPC وZod وDrizzle واختبارات contract/procedure تغطي الوحدات الأساسية. |
-| تجربة المستخدم المتكاملة | ⚠️ | الشاشات والمسارات موجودة، لكن لا توجد suite E2E كاملة تدير متصفحاً وهاتفاً ومحاكاة GPS. |
-| العزل متعدد العملاء | ✅ | tenant scope واختبارات عزل محددة، مع منع tenant admin من سجل المنصة. |
-| Compliance Part 11-style | ⚠️ | ضوابط التصميم قوية؛ ما زال يلزم IQ/OQ/PQ موقّع واختبار MySQL/NTP/استعادة إنتاجي. |
-| الأمن | ⚠️ | RBAC والتحقق والمدخلات والـ rate limits موجودة؛ يلزم DAST/Pentest وrate-limit موزع قبل التوسع الأفقي. |
-| الأداء والسعة | ❌ | لا توجد benchmark موثقة على حجم بيانات كبير؛ لا يجوز وصف السعة بأنها مثبتة. |
+ما زالت حدود الإثبات واضحة. لا توجد أرقام latency أو نتائج حمل على بيانات staging كبيرة، ولا دليل قبول iOS/Android فعلي أو DAST مستقل أو backup/restore ممارس على قاعدة تشغيلية. تبقى هذه البنود **مؤجلة** ولا ينبغي تفسير اختبارات العقد والإجراءات على أنها بديل عنها.
 
-## تحديث Prompt 14 — المعالجة المتاحة بلا بنية تحتية إضافية
+| المجال | الحالة | الدليل المتاح | الحد المتبقي |
+|---|:---:|---|---|
+| منطق الأعمال والـ APIs | ✅ | tRPC وZod وDrizzle واختبارات إجراءات/عزل ورخص لجميع الإضافات الجديدة. | اختبار تكاملي مع أنظمة عميل فعلية عند التعاقد. |
+| تجربة المستخدم | ⚠️ | صفحات Customer 360 والمخزون والمستندات والتكاملات متصلة بإجراءات tRPC. | لا يوجد تشغيل قبول browser كامل لكل دور في هذه الجولة. |
+| العزل متعدد العملاء | ✅ | `resolveTenantScope()` وشروط `tenantId` في الإجراءات الجديدة، مع اختبارات منع الأدوار غير المصرح لها. | property/fuzz testing أوسع للمعرّفات العشوائية. |
+| Compliance Part 11-style | ⚠️ | append-only records، audit، توقيع موجب hash-linked وتوقيت خادم. | IQ/OQ/PQ موقّع، NTP runtime، وDR evidence. |
+| الأمن | ⚠️ | RBAC، حدود الإدخال، headers/rate limiting، webhook HTTPS guard وسجل تدقيق. | DAST/pentest وrate limiter موزع قبل multi-node. |
+| الأداء والسعة | ⚠️ مؤجل | مراجعة query paths وفهرس مركب لقائمة procurement الخاصة بالمندوب. | benchmark/EXPLAIN/load test على MySQL staging. |
 
-تمت إضافة نسخ MVP متعددة العملاء لـ **forecasting، procurement، المركبات/الصيانة/الوقود، الفعاليات، وcoaching** ضمن مساحة تشغيلية موحدة، مع migrations غير مدمرة، فهارس tenant-scoped، إجراءات tRPC محمية، وسجل تدقيق. أضيفت أيضاً قاعدة اختيار العربية/الإنجليزية مع `lang` و`dir=rtl` محفوظين في المتصفح؛ هذه **بنية localization** وليست بعد ترجمة كاملة لكل النصوص في الصفحات التاريخية.
+## 2. نتيجة البنود المعالجة في هذه الجولة
 
-كما أضيف Playwright محلي قابل للتشغيل. اجتاز اختباران فعليان: مسار الدخول غير الموثق ومحاكاة browser GPS المحددة. لا يمثل هذا اختبار هاتف حقيقياً أو تدفقاً مصادقاً كاملاً؛ تظل تلك الأدلة مؤجلة إلى حين توفير emulator/device وtenant اختباري. أما NTP وbackup/restore وDAST والـ distributed rate limit فقد تحولت إلى runbooks قابلة للتنفيذ وموسومة بوضوح بأنها **غير منفذة**.
+| البند | الحالة | الدليل التقني المتحقق | ما لا يدعيه النظام |
+|---|:---:|---|---|
+| الحضور التلقائي من GPS | ✅ | تم إصلاح mock الذي كان يفتقد `.orderBy()`؛ `rep.procedure.test.ts` يثبت استدعاء `autoMarkAttendance` من مسار location-ping. | لا يثبت دقة geofence على جهاز فعلي أو تحت حمل كثيف. |
+| Customer 360 وaffiliations | ✅ | `accountAffiliations`، إجراءات list/create/end، وتجميع `crm.account360`، مع اختبار aggregation والتحقق من الإدخال. | لا يوجد account-plan متقدم أو import/reconciliation جماعي. |
+| Ride-along وmanager scorecards | ✅ | `rideAlongSessions` و`coachingScorecards`، schedule/complete/create/acknowledge، واختبار يمنع المندوب من تحكم المدير. | لا يوجد قياس longitudinal للتحسن أو marketplace للتدريب. |
+| Warehouse عام | ✅ | sites، ledger مستقل append-only، balances، reorder levels، واجهة، واختبار منع المندوب من الكتابات. | لا يوجد FEFO/FIFO أو reconciliation مادي أو تنبيه انتهاء صلاحية. |
+| Document Management System | ✅ | `documentRecords` مع document number/version/previous version/file key/retention/status، واجهة register/version/activate/archive، واختبار RBAC. | رفع bytes وvirus scanning وlegal hold ليست ضمن MVP الحالي. |
+| التوقيع الإلكتروني الإيجابي | ✅ | `compliance.esignature.test.ts` ينفذ مسار credential صحيح ويثبت `recordBindingHash` و`signedAt` وinsert وaudit event. | ليس OQ على MySQL إنتاجي ولا اختبار replay/lockout خارجي. |
+| Arabic/English وRTL | ⚠️ | قاموس مشترك موسّع للمخزون والمستندات وride-along/scorecards ورسائل أخطاء هذه الإجراءات مع switcher و`dir=rtl`. | لا يدعي تغطية ترجمة بشرية كاملة لكل copy تاريخي أو تنسيق locale للأرقام والتواريخ. |
+| مراجعة الأداء محلياً | ✅ ضمن النطاق | لا توجد N+1 في قوائم forecasts/procurement/events لأنها استعلامات tenant-scoped مفردة؛ كان forecast/events يملكان indexes ملائمة، وأضيف `tenantId, createdBy, createdAt` لمسار procurement الخاص بالمندوب. | لا توجد نتيجة latency أو claim سعة. |
+| Integration gateway MVP | ✅ | `integrationApiKeys` hash-only/versioned، `webhookEndpoints`، `webhookDeliveryLogs` append-only، HTTPS/embedded-credentials/local-host guard، توقيع HMAC وسجل dispatch. | لا يوجد OAuth authorization server أو retries/scheduling أو integration marketplace. |
 
-| بند Prompt 14 | الحالة بعد المعالجة | دليل حالي | ما يبقى مؤجلاً |
-|---|---:|---|---|
-| Forecasting MVP | ✅ | `territoryForecasts`، moving-average/manual baseline، إجراءات وواجهة واختبار RBAC. | backtesting على sales history حقيقية. |
-| Procurement MVP | ✅ | طلب → مراجعة → purchase order في schema/router مع audit. | UI لإصدار PO/استلام goods وربط warehouse ledger. |
-| Fleet maintenance/fuel MVP | ✅ | vehicles، maintenance schedules، fuel logs، فهارس وإجراءات وواجهة. | تنبيهات overdue، receipts، وtelematics. |
-| Events/Webinars MVP | ✅ | events وattendees model وإجراءات إنشاء/دعوة وواجهة إنشاء. | attendee lifecycle UI وspend/consent follow-up. |
-| Coaching MVP | ✅ | manager notes، compliance flag، rep acknowledgement، audit. | coach scorecards/ride-along workflows. |
-| Arabic/English | ⚠️ | switcher محفوظ + RTL foundation + ترجمة بعض shell labels. | ترجمة مكتملة لكل الشاشات والمحتوى ورسائل الأخطاء. |
-| Web E2E/GPS mock | ⚠️ | Playwright: 2/2 passed على Chromium محلي. | authenticated end-to-end fixture وAndroid/iOS execution. |
-| NTP/backup/DAST/distributed RL | ⚠️ مؤجل | runbooks آمنة وجاهزة. | تنفيذ موثق على staging فقط. |
-| Large-data performance | ⚠️ مؤجل | مراجعة فهارس وفهارس tenant-scoped للموديلات الجديدة. | أرقام latency/EXPLAIN/load test بعد توفر MySQL staging. |
+## 3. قائمة تحقق وحدات الأعمال
 
-## 2. قائمة التحقق: CRM وتطبيق المندوبين
+| الوحدة | التقييم | الدليل المحدث | الخطوة التالية الواقعية |
+|---|:---:|---|---|
+| Accounts/HCPs وContacts | ✅ | CRM procedures وواجهات الحسابات/جهات الاتصال وCustomer 360. | import جماعي وحل تكرار. |
+| ملف العميل 360° وaffiliations | ✅ | العلاقات الفعالة والمؤرخة وتفاصيل مصادر الحساب موحدة في `crm.account360`. | account-plan goals وstakeholder visualization. |
+| Cycle plans والزيارات | ✅ | cycle/planned visits/visit evidence مرتبطة بمسار المندوب. | browser E2E من الخطة إلى dashboard. |
+| Electronic signature | ✅ محلياً | credential + explicit action + meaning + server timestamp + hash + audit مثبتة باختبار موجب. | OQ على قاعدة MySQL تشغيلية وnegative replay. |
+| Sample custody | ⚠️ | lot/expiry/handoff/custody report موجودة. | سيناريو browser كامل وFEFO/reconciliation. |
+| Warehouse/inventory العام | ✅ | مخزون مستقل عن chain-of-custody للعينات مع ledger تعويضي فقط. | cycle counts وانتهاء الصلاحية. |
+| Procurement | ✅ MVP | PR → review → PO في العمليات؛ وفهرس قائمة المندوب. | goods receipt/invoice match وربط المستودع. |
+| Documents/SOPs | ✅ MVP | سجل versioning/retention منفصل عن CLM ولا يحذف النسخ القديمة. | uploads، retention policy engine، legal hold. |
+| ERP/HR | ✅ | employee/attendance/GPS/leave/expense/payroll متاحة واختباراتها ناجحة. | malware scan وcalendar/org chart. |
+| Fleet maintenance/fuel | ✅ MVP | vehicles/maintenance/fuel داخل Operations Expansion. | overdue notifications وtelematics. |
+| Events/Webinars | ✅ MVP | event/attendee model وإجراءات محمية. | lifecycle/spend/consent UI. |
+| Marketing وCLM | ⚠️ | campaign/segment/approved-content موجودة؛ live delivery يحتاج مفاتيح عميل. | sandbox provider/webhook/bounce/consent tests. |
+| AI وanalytics | ✅/⚠️ | routing، call assistant، NBA، semantic analytics وdaily anomaly موجودة. | لا claim لتشغيل provider فعلي بلا مفتاح عميل أو scheduler staging. |
+| BI وexports | ✅ | role-based dashboards وPDF/XLSX contracts. | scale/retention/date filters/saved views. |
+| تكاملات خارجية | ✅ MVP | مفاتيح v1 وwebhooks مدققة ذاتية الاستضافة. | OAuth، retries، marketplace، customer-specific contracts. |
 
-| الخاصية في PRD | الحالة | دليل المراجعة والتكامل | المعالجة المطلوبة |
-|---|---:|---|---|
-| Accounts/HCPs وContacts | ✅ | CRM routers وواجهات Accounts/Contacts واختبارات عقد وترخيص CRM. | إضافة استيراد جماعي وحلّ التكرار عند التوسع. |
-| ملف عميل 360°، tiering، history | ⚠️ | tiering وسجل الزيارات والإشارات التجارية موجودة؛ لا يوجد نموذج affiliations كامل أو عرض موحد موثق لكل المصادر. | بناء Customer 360 موحد مع affiliations ومصادر البيانات وتاريخ موحد. |
-| Cycle plans وتخطيط الزيارات | ✅ | Plans/Cycle Planner وplanned visits متصلة بمسار المندوب والمسارات. | إضافة قيود سعة وخطة تغطية زمنية قابلة للضبط. |
-| Visit logging (أهداف/منتجات/عينات/خطوات) | ✅ | نموذج الزيارة ومسار immutable write وارتباط العينات والتوقيع. | تنفيذ اختبار متصفح/هاتف كامل من إنشاء إلى العرض في BI. |
-| توقيع إلكتروني للزيارة/العينة | ⚠️ | معنى التوقيع، credential، explicit action، وتوقيت الخادم مُنفذة؛ الاختبار الحالي يثبت الرفض عند غياب action أكثر من إثبات عملية إيجابية كاملة بمخزن بيانات. | إضافة اختبار إجراء إيجابي/سلبي بكلمة مرور حقيقية وsubject tenant-scoped. |
-| عينات ومخزون/lot/expiry/custody | ⚠️ | معاملات عينات وسلسلة custody وتقرير lot/expiry/hand-off موجودة. | إضافة warehouse balances، reconciliation دوري، وقواعد FIFO/FEFO والتنبيه قبل الانتهاء. |
-| Territories وalignment | ✅ | Territory Manager، geofence، scope checks، واختبارات GPS. | إضافة simulation لنقل account بين territories مع تاريخ سريان. |
-| Opportunity Kanban | ✅ | Opportunity pipeline موجود مع CRM UI وrouter. | إضافة forecast categories وprobability history. |
-| Approved content/CLM | ✅ | مكتبة محتوى مع approval وpresentation evidence واستخدام في مساحة المندوب. | إضافة version rollback وexpiry/re-approval للمحتوى. |
-| Consent وSunshine-style spend | ⚠️ | consent tracking المرتبط بـGPS موجود؛ لا يظهر سجل spend/transfer-of-value مكتمل. | نمذجة spend transactions وربطها بالـ HCP والحملات والتقارير. |
-| Coaching وfeedback للمدير | ❌ | لا يظهر workflow لترك ملاحظات manager على زيارة أو ride-along. | إضافة coaching notes، flags، acknowledgement، وقياس التحسن. |
-| Offline-first mobile Android/iOS | ⚠️ | Foundation Expo/SQLite queue ومزامنة idempotent واختبارات mobile transport موجودة. | CI builds للـ Android/iOS واختبار انقطاع/استئناف شبكة وجهاز فعلي. |
+## 4. الأمن والعزل والامتثال
 
-## 3. قائمة التحقق: ERP/HR
+### 4.1 العزل وRBAC
 
-| الخاصية | الحالة | دليل المراجعة والتكامل | المعالجة المطلوبة |
-|---|---:|---|---|
-| Employee master data وأدوار | ✅ | Directory وHR وRBAC/tenant scope. | إضافة org chart حقيقي وmanager hierarchy إن كانت مطلوبة. |
-| Attendance مع GPS/geofence | ✅ | attendance، GPS-backed check-in، وإجراءات HR/Tracking واختبارات. | اختبار ميداني لنطاقات GPS ونطاقات السماح. |
-| Leave request/approval | ✅ | workflow واختبارات HR workflow/procedure. | إضافة calendar/team capacity integration. |
-| Expense وreceipt upload/approval | ✅ | receipt constraints، expense workflow، وتخزين S3. | فحص malware/virus للملفات قبل الإنتاج. |
-| Payroll CSV/XLSX export | ✅ | HR export وخطوط تدقيق، واختبارات. | إضافة mapping templates خاصة بمزود الحسابات. |
-| Warehouse/inventory | ⚠️ | transactions للعينات، لا يوجد warehouse module عام مستقل. | إنشاء stock ledger، sites، adjustments، وreorder levels. |
-| Procurement | ❌ | لا توجد purchase request/order workflows. | إضافة PR → approval → PO → receipt → invoice match. |
-| Documents (contracts/SOP/certifications) | ⚠️ | receipts وCLM assets موجودة، لا توجد DMS عامة مع versioning/retention. | بناء document register، controlled versions، تدريب وإقرارات. |
+كل جدول جديد في هذه الجولة يحمل `tenantId` وكل read/write في routers الجديدة يبني شرط النطاق الفعال. إجراءات المخزون والمستندات والتكاملات لا تسمح بالكتابة إلا للأدوار المحددة، وتغطي الاختبارات رفض representative في inventory/documents/integrations. مفاتيح API لا تخزن خاماً؛ يحتفظ النظام بـ `keyHash` وprefix فقط، ويعاد السر مرة واحدة وقت الإصدار.
 
-## 4. قائمة التحقق: Fleet/GPS والمسارات
+| بند | الحالة | الدليل |
+|---|:---:|---|
+| Tenant scope للميزات الجديدة | ✅ | شروط `eq(table.tenantId, scope.tenantId)` قبل list/read/update/insert وhelpers للتحقق من ملكية السجل. |
+| RBAC للميزات الجديدة | ✅ | `tenantRoleProcedure` ومسارات denial في اختبارات inventory/documents/integrations/coaching. |
+| سجل مخزون غير قابل للتحرير | ✅ | router لا يعرّض update/delete للـ ledger؛ التصحيح بحركة تعويضية. |
+| سجل تسليم webhook غير قابل للتحرير | ✅ | insert-only `webhookDeliveryLogs` مع hash للpayload وملخص response محدود. |
+| منع SSRF الأساسي للـ webhook | ✅ | HTTPS فقط، منع credentials المضمّنة وlocalhost/private literal IPs. |
+| اختبار أمني مستقل | ⚠️ مؤجل | لا يوجد DAST أو pentest أو DNS-rebinding validation خارجي. |
 
-| الخاصية | الحالة | دليل المراجعة والتكامل | المعالجة المطلوبة |
-|---|---:|---|---|
-| Shift-scoped live GPS | ✅ | start/stop shift، consent، telemetry، وTracking UI؛ السياسة لا تسمح بتتبع 24/7. | اختبار battery/permission/backgound على iOS/Android فعلي. |
-| Geofencing territory/HCP | ✅ | Haversine MySQL-side، أحداث قرب/دخول/خروج، واختبارات geofence. | load test لعدد كبير من pings وHCPs لكل tenant. |
-| OSRM route optimization | ✅ | Compose OSRM، priority-aware routes، preview وmobile handoff. | اختبار زمن الاستجابة وحالات OSRM unavailable على بيانات طريق حقيقية. |
-| Trip history/mileage/idle | ✅ | telemetry/idle/trip ومسارات BI fleet. | التحقق من دقة المسافة مقابل مسارات حقيقة. |
-| Maintenance/fuel log | ❌ | لا توجد جداول/واجهات صيانة أو وقود. | إضافة vehicle asset، service schedule، fuel receipt، وتنبيهات due. |
-| Driver behavior | ❌ | لا يظهر تحليل سرعة/فرملة/حساسات هاتف أو OBD. | إضافة mobile sensor policy أولاً ثم OBD connector اختياري. |
+### 4.2 الامتثال
 
-## 5. قائمة التحقق: Marketing وAI وAnalytics/BI
+اختبار التوقيع الإيجابي الحالي يؤكد أن تحقق credential الناجح يسبق insert، وأن hash الربط للسجل وتوقيت الخادم يوضعان مع توقيت verify/action، وأن audit event يكتب للـ tenant والموقّع نفسهما. هذا دليل محلي أقوى من اختبار رفض action فقط، لكنه لا يغني عن حزمة OQ موقعة على بنية العميل.
 
-| الخاصية | الحالة | دليل المراجعة والتكامل | المعالجة المطلوبة |
-|---|---:|---|---|
-| Campaigns Email/SMS/WhatsApp | ⚠️ | builders/adapters واختبارات delivery موجودة؛ الإرسال الحقيقي يتطلب مفاتيح العميل وتهيئة provider. | sandbox integration tests وwebhook delivery/bounce lifecycle. |
-| Segmentation | ✅ | segment builder على CRM attributes. | إضافة preview counts، versioning، وsuppression lists. |
-| Content usage analytics | ✅ | content presentation evidence والتحليلات موجودة. | إضافة conversion attribution؛ لا توجد حالياً correlation موثقة مع النتائج. |
-| Events/webinars | ❌ | لا توجد إدارة events/attendees/medical events. | إضافة event object، invitations، attendance، وspend compliance. |
-| AI gateway multi-provider/local | ✅ | OpenAI/Anthropic/Gemini/local routes، policy per tenant، fail-closed sensitive local. | مراقبة تكلفة/latency وkey rotation per tenant. |
-| Call assistant وdictation | ✅ | structured draft، transcription route، مراجعة بشرية، وسجل invocation. | اختبار provider حقيقي بمفتاح عميل في بيئة sandbox. |
-| Next-best action | ✅ | tenant-scoped ranking من recency/tier/signals. | معايرة الأوزان، feedback loop، وقياس uplift. |
-| AI territory/route optimizer | ⚠️ | OSRM optimizer موجود، لكنه ليس مولّد route AI أسبوعي متعدد القيود. | إضافة قيود سعة/أيام/skills وتحسين متعدد الأيام. |
-| Forecasting | ❌ | لا يظهر نموذج forecasting للمبيعات أو الطلب. | تجهيز sales history ثم baseline forecast وbacktesting. |
-| Conversational analytics | ✅ | allow-listed semantic catalog، charts/tables، history، tenant isolation. | توسيع catalog تدريجياً مع approval وعدم فتح SQL حر. |
-| Content recommendation | ❌ | لا يظهر ranking محتوى per HCP. | بناء feature store مبسط وسياسة approval-filtered recommendations. |
-| Anomaly detection | ✅ | sample/expense/territory anomaly، lifecycle alerts، daily monitor. | معايرة thresholds من بيانات فعلية وقياس false positives. |
-| AI onboarding assistant | ❌ | لا يوجد SOP/product knowledge chat مخصص للتدريب. | بناء RAG محلي على SOPs مع access filtering وcitations. |
-| Role BI dashboards + PDF/XLSX | ✅ | rep/manager/fleet/exec، KPI، heatmap، exports، واختبارات BI. | إضافة date/territory filters، saved views، report scheduling. |
+| بند | الحالة | الحد المتبقي |
+|---|:---:|---|
+| Append-only visits/samples/signatures/audit | ✅ | negative database-trigger tests على MySQL production/staging. |
+| Two-component e-signature | ✅ محلياً | wrong password/replay/cross-tenant OQ وevidence من runtime. |
+| NTP server time | ⚠️ مؤجل | chrony/NTP health monitor، drift record، وتنفيذ موثق. |
+| Backup/restore | ⚠️ مؤجل | restore drill موثق على قاعدة staging مخصصة. |
+| retention/legal hold | ⚠️ | سجل retention للتوثيق موجود؛ policy engine وhold غير مبنيين. |
 
-## 6. المنصة، العزل، الـ compliance، والأمن
+## 5. المسارات end-to-end
 
-### 6.1 العزل متعدد العملاء
+| المسار | الحالة | ما ثبت محلياً | ما يبقى |
+|---|:---:|---|---|
+| Login → session | ⚠️ | UX loading/error والاختبارات المحلية/Playwright الأساسية السابقة. | authenticated browser role matrix وlockout. |
+| Shift → GPS → attendance | ⚠️ | GPS ingestion/attendance mock regression وgeofence procedure tests. | Android/iOS background/permission/network scenarios. |
+| Plan → visit → BI | ⚠️ | procedures وBI contracts مترابطة. | سيناريو browser واحد كامل. |
+| Positive e-signature | ✅ محلياً | credential/hash/timestamp/audit persistence path مثبت. | production-like MySQL OQ. |
+| Warehouse movement → balance → reorder | ✅ محلياً | append-only procedure والواجهة والحساب in-memory واختبار role gate. | load/performance وcycle count. |
+| Document register → version → activate | ✅ محلياً | إجراءات version/status وسجل retention وواجهة. | file-upload/virus scan/integration test. |
+| API key → webhook dispatch | ✅ MVP | issue/hash/register/status/dispatch/log workflow في code والاختبار role denial. | endpoint حقيقي/retry/secret rotation/OAuth. |
 
-| بند | الحالة | دليل المراجعة | الخطوة التالية |
-|---|---:|---|---|
-| `tenantId` في النماذج وإجراءات scoped | ✅ | schema/routers تستخدم `resolveTenantScope()` وpredicates؛ اختبارات CRM/BI/analytics وhardening تغطي حالات عزل. | إضافة property-based/fuzz tests لكل router ومعامل ID عشوائي. |
-| منع tenant admin من منصة الشركات | ✅ | اختبار جديد يثبت رفض `platform.listTenants` و`provisionTenant` لمدير tenant. | سجل review فصلي لسياسة super-admin. |
-| Super-admin provisioning/lifecycle | ✅ | Tenant Management UI وplatform router وسبب lifecycle/audit. | إضافة invite/reset-admin flow وfour-eyes approval للإيقاف. |
-| SQL injection | ✅ | Drizzle query builder وZod؛ analytics يعتمد semantic allow-list بدلاً من SQL حر. | DAST وdependency scan وSAST في CI؛ هذا ليس بديلاً عن اختبار خارجي. |
+## 6. الأداء والسعة — حدود صريحة
 
-### 6.2 strict compliance
+لم يتم إنشاء benchmark صناعي أو ادعاء رقم latency. المراجعة الثانية للكود حددت أن `forecasts.list` يستخدم index `tenantId, periodStart, periodEnd`، و`events.list` يستخدم `tenantId, startsAt`، وكلاهما يطابقان filter/order المستخدمين. أما `procurement.list` للمندوب فيجمع `tenantId` و`createdBy` ويرتب `createdAt`؛ لذلك أضيف index مركب مطابق. لا توجد N+1 في هذه القوائم لأنها لا تنفذ استعلاماً لكل صف.
 
-| بند | الحالة | دليل المراجعة | الخطوة التالية |
-|---|---:|---|---|
-| Append-only visits/samples/signatures/audit | ✅ | لا توجد update/delete procedures لهذه الأدلة، migrations/guards واختبارات compliance strict. | تنفيذ negative tests على MySQL 8.4 الإنتاجي كما في runbook. |
-| Reason-for-change/revision evidence | ✅ | regulated-record revision links وreason field. | اختبار إيجابي لعملية supersession كاملة مع audit retrieval. |
-| Two-component e-signature | ⚠️ | credential verification + explicit action + meaning + timestamps موجودة؛ إثبات E2E الإيجابي ما زال محدوداً. | OQ test signed subject، wrong credential، replay، وcross-tenant subject. |
-| NTP server time | ⚠️ | التوقيت يُنشأ على الخادم والوثائق تطلب NTP؛ لا توجد مراقبة NTP أو evidence runtime في التطبيق. | chrony/NTP health monitor وتنبيه drift واحتفاظ بسجل الحالة. |
-| Access review/change control/custody | ✅ | Compliance Review، effective permissions snapshot، change request، custody report. | إضافة export موقّع وscheduled access review. |
-| Retention/retrievability | ⚠️ | الاحتفاظ append-only والتقارير البشرية موجودان، لكن لا توجد policy engine/legal hold. | إعداد tenant retention schedules وhold وarchive retrieval tests. |
+| مجال الأداء | الحالة | شرط القبول المؤجل |
+|---|:---:|---|
+| GPS/geofence | ⚠️ مؤجل | MySQL staging مع p95 ingestion/alert وEXPLAIN على حجم ping واقعي. |
+| الخرائط/الرحلات | ⚠️ مؤجل | pagination/clustering وقياس 10k+ ping لكل tenant. |
+| BI/export | ⚠️ مؤجل | 12 شهراً من بيانات ممثلة وقياس زمن/ذاكرة PDF/XLSX. |
+| Forecast/procurement/events | ✅ مراجعة كود | index review مكتمل؛ لا claim latency قبل benchmark. |
+| Anomaly monitor | ⚠️ مؤجل | batching/metrics تحت حجم متعدد العملاء. |
 
-### 6.3 الأمن
+## 7. خارطة الطريق بعد هذه المعالجة
 
-| بند | الحالة | دليل المراجعة | الخطوة التالية |
-|---|---:|---|---|
-| RBAC لكل API surface | ✅ | tenantRoleProcedure/superAdminProcedure عبر routers، واختبارات role denial. | policy matrix مولد آلياً واختبارات لكل procedure عند CI. |
-| Input validation | ✅ | Zod schemas بحدود وصيغ للمدخلات عبر الإجراءات. | fuzzer للـ malformed payloads وupload parsers. |
-| Authentication | ✅ | self-hosted JWT/local credentials مع سياق tRPC محمي. | MFA/SSO، password lockout، وsession/device management. |
-| Rate limiting | ✅ | in-process 300/min + Nginx 20r/s/40 burst، واختبار 429. | Redis/shared limiter عند تعدد nodes. |
-| Headers/body/edge controls | ✅ | CSP، no-store API، anti-frame، nosniff، body caps/timeouts. | TLS config scan وCSP report-only tuning. |
-| اختبار أمني مستقل | ❌ | لا يوجد pentest/DAST مستقل أو scan dependency موثق ضمن المراجعة. | OWASP ASVS review وDAST/SCA قبل go-live. |
-
-## 7. مراجعة مسارات المستخدم الرئيسية end-to-end
-
-| المسار | الحالة | ما تم إثباته | النقص لمنح ✅ E2E كامل |
-|---|---:|---|---|
-| تسجيل الدخول → session | ⚠️ | اختبار logout/auth وعزل الإجراءات المحمية. | Playwright login/logout/session-expiry وlockout scenario. |
-| Start Shift → GPS → map/alert | ⚠️ | tracking/geofence/rep procedure tests وواجهة tracking؛ consent/shift policy في الكود. | اختبار هاتف فعلي لخلفية التطبيق، permissions، network loss، وGPS mock. |
-| خطة زيارة → visit log → dashboard | ⚠️ | CRM/rep procedures وBI tests تربط المفاهيم. | سيناريو واحد على متصفح من create plan إلى completed visit وrep/manager dashboard. |
-| e-signature | ⚠️ | validation للـ explicit action وضوابط static/contract. | positive credential test وتحقق من record-binding hash/audit trail. |
-| صرف عينة → hand-off → custody report | ⚠️ | sample/custody model وتقارير compliance. | سيناريو كامل بlot/expiry/hand-off/visit ثم export/report assertion. |
-| إجازة ومصروف | ✅ | HR procedure/workflow tests، receipt policy، payroll export. | إضافة browser E2E للتجربة البصرية فقط. |
-| حملة تسويقية | ⚠️ | campaign delivery and marketing tests. | provider sandbox، webhook events، unsubscribe/consent test. |
-| سؤال AI → chart/table | ⚠️ | allow-listed analytics procedures/contracts. | تنفيذ مع provider configured وrole UI E2E؛ لا يتم ادعاء نجاح provider حقيقي بلا مفتاح عميل. |
-| anomaly → manager lifecycle | ⚠️ | anomaly detection/dedup/procedure tests. | تشغيل scheduler على بيئة staging وتأكيد authenticated callback/alert UX. |
-
-## 8. الأداء وقابلية التوسع
-
-لم تُنشأ بيانات كبيرة اصطناعية لهذه المراجعة، التزاماً بعدم اختلاق benchmark أو أرقام أداء. لذلك لا توجد نتيجة زمنية موثقة تثبت أن خرائط GPS أو dashboards تستجيب بسرعة عند عشرات/مئات الآلاف من الأحداث. التصميم الحالي يستخدم MySQL predicates حسب tenant، Haversine على الخادم، وBI aggregations scoped، كما أن المسارات وOSRM خدمات خاصة؛ لكن ذلك **ليس بديلاً عن اختبار حمل**.
-
-| مجال الأداء | الحالة | الخطر | اختبار قبول مقترح |
-|---|---:|---|---|
-| GPS ingestion/geofence | ⚠️ | bursts من pings قد تضغط MySQL وحساب المسافات. | بيانات staging واقعية مع 500–2,000 جهاز نشط، p95 ingestion/alert، وفحص indexes/explain. |
-| خرائط وتاريخ الرحلات | ⚠️ | تحميل نقاط كثيرة في viewport واحد. | pagination/clustering، وقياس payload/render عند 10k+ ping للtenant. |
-| BI وexports | ⚠️ | aggregations/exports قد تكبر مع التاريخ. | 12 شهراً من بيانات ممثلة، p95 dashboard ووقت/ذاكرة XLSX/PDF. |
-| Anomaly daily job | ⚠️ | scan يومي قد يطيل مع نمو records. | benchmark per tenant، batching، وmetrics للوظيفة. |
-| Rate limiting | ✅ | متوفر دفاع مبدئي. | shared Redis limiter قبل replicas/multi-node. |
-
-## 9. الفجوات مقابل Veeva وSalesforce
-
-Veeva Vault CRM يربط call reporting بخطط الحساب والمنتج وأهداف المكالمات وحدود العينات، ويجعل المكالمة submitted غير قابلة للتحرير أو الحذف.[1] كما يذكر قدرات life-sciences مثل omnichannel engagement، key account management، events، approved content، mobile/offline، وAI خاص بالسياق.[2] Salesforce يبرز lead management، account/opportunity management، forecast/pipeline management، automation، quoting/contract approvals، والتقارير والـ dashboards.[3]
-
-| فجوة تنافسية | مقارنة موجزة | الأولوية | توصية تنفيذية |
-|---|---|---:|---|
-| Forecasting وquoting/contract approval | Salesforce يوفر forecasting/quotes/approvals؛ PharmaFlow لا يقدم forecasting أو quoting. [3] | عالية | إضافة sales/product fact tables، baseline forecast مع backtest، ثم quote/approval workflow. |
-| HCP/Key Account 360 وaffiliations | Veeva يركز على account planning وKAM والسجل الموحد. [2] | عالية | HCP affiliations، account-plan goals، stakeholder map، ومؤشرات plan progress. |
-| Events/medical events | Veeva يذكر events management وomnichannel. [2] | متوسطة | Event lifecycle، attendees، consent، spend، وfollow-up tasks. |
-| Coaching وfield effectiveness | Salesforce يبرز deal insights/coaching؛ لا يوجد coaching module واضح. [3] | متوسطة | manager feedback، ride-along، scorecards، coaching plans. |
-| Maintenance/fuel/driver behavior | فئة fleet الأساسية غير مكتملة. | متوسطة | vehicle/fuel/service/behavior modules وربطها بالـ GPS. |
-| Enterprise integrations | المنافسون يملكون ecosystem/integrations أوسع؛ PharmaFlow يملك tRPC داخلياً لا public integration platform مكتمل. | عالية | API versioning، OAuth/API keys، webhooks، audit، integration gateway. |
-| Multi-language Arabic/English | PRD يطلبها، ولا يظهر i18n كامل. | عالية للأسواق العربية | i18next، RTL، locale-aware dates/numbers، وtranslation governance. |
-| Validation-operational maturity | Veeva يدعي pre-validation، بينما PharmaFlow يقدّم framework وdocumentation فقط. [2] | عالية للـ regulated tenants | IQ/OQ/PQ customer package، NTP/backup evidence، qualified release process. |
-
-## 10. خطة إصلاح مرتبة
-
-| الفترة | العمل | معيار الانتهاء |
+| الأولوية | العمل | معيار الإغلاق |
 |---|---|---|
-| P0 — قبل أول عميل منظم | Playwright/mobile E2E للمسارات التسعة؛ اختبار e-signature إيجابي؛ MySQL trigger/NTP/backup restore evidence؛ DAST/SCA. | حزمة OQ وsecurity sign-off موثقة، بلا ادعاء غير مثبت. |
-| P1 — أول ربع | multi-language/RTL، retention/legal hold، warehouse reconciliation، content/consent spend، performance load suite. | p95/SLO موثق على حجم بيانات متفق عليه، وسياسات retention قابلة للتشغيل. |
-| P2 — تمييز تجاري | forecasting، KAM/coaching، events، maintenance/fuel، public API/webhooks. | استخدام فعلي لكل workflow مع audit وtenant isolation tests. |
-| P3 — توسع المؤسسة | Redis rate limiter، SSO/MFA، integration marketplace، DR drills، observability. | اختبارات failover/DR وsecurity review خارجي. |
+| P0 تشغيلي | MySQL staging، benchmark، DAST/SCA، NTP وbackup/restore drills، browser role E2E. | نتائج موقعة وأرقام/سجلات حقيقية بلا تقديرات. |
+| P1 regulated | retention/legal hold، virus scanning، e-signature negative/replay OQ، warehouse reconciliation وFEFO. | ضوابط تشغيلية واختبارات قبول قابلة للتكرار. |
+| P2 integrations | OAuth، API-key rotation، DNS-rebinding protection، retries/dead-letter وإدارة subscriptions. | عقود customer integration واختبارات endpoint حقيقية. |
+| P3 enterprise | shared limiter، MFA/SSO، observability وDR/failover. | security review خارجي واختبارات recovery. |
 
-## 11. المراجع
+## 8. المراجع
 
 [1] [Veeva Vault CRM Help — Call Reporting Overview](https://vaultcrmhelp.veeva.com/doc/Content/CRM_topics/Call_Reporting_2/CallReportingOverview.htm)
 

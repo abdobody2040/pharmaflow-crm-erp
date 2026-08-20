@@ -12,5 +12,8 @@ describe("expansion MVP authorization", () => {
     await expect(caller.expansion.fleet.vehicles.create({ registrationNumber: "CAR-001", makeModel: "Fleet Van" })).rejects.toThrow("not authorized");
     await expect(caller.expansion.events.create({ name: "Clinical webinar", eventType: "webinar", startsAt: new Date(), endsAt: new Date(Date.now() + 3_600_000) })).rejects.toThrow("not authorized");
     await expect(caller.expansion.coaching.add({ visitLogId: "00000000-0000-4000-8000-000000000001", coachingNote: "Discuss the approved product material before the next call." })).rejects.toThrow("not authorized");
+    await expect(caller.expansion.coaching.rideAlongs.schedule({ repUserId: 82, scheduledFor: new Date() })).rejects.toThrow("not authorized");
+    await expect(caller.expansion.coaching.rideAlongs.complete({ id: "00000000-0000-4000-8000-000000000001", completionNote: "Observed compliant call delivery." })).rejects.toThrow("not authorized");
+    await expect(caller.expansion.coaching.scorecards.create({ repUserId: 82, preparationScore: 3, productKnowledgeScore: 3, callQualityScore: 3, complianceScore: 3, followUpScore: 3, summary: "Representative should strengthen call preparation." })).rejects.toThrow("not authorized");
   });
 });

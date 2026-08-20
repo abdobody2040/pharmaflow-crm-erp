@@ -113,6 +113,48 @@
       "when": 1787189244867,
       "tag": "0015_classy_violations",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1787193984690,
+      "tag": "0016_colossal_santa_claus",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1787194372853,
+      "tag": "0017_closed_rumiko_fujikawa",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1787194688860,
+      "tag": "0018_lucky_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1787195050125,
+      "tag": "0019_grey_black_panther",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1787195489775,
+      "tag": "0020_sad_tyger_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1787195550438,
+      "tag": "0021_long_menace",
+      "breakpoints": true
     }
   ]
 }

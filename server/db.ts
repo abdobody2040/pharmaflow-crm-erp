@@ -339,23 +339,25 @@ export async function listSignatures(scope: TenantScope) {
 
 export async function createSignature(scope: TenantScope, input: {
   subjectType: string; subjectId: string; meaning: "authorship" | "approval" | "review" | "attestation"; intentStatement: string; credential: string; explicitSigningAction: true;
-}) {
-  const db = await getDb();
+}, dependencies?: { db?: any; signer?: { passwordHash: string | null } | null; verifyCredential?: (credential: string, hash: string) => Promise<boolean>; appendAudit?: typeof appendAuditEvent }) {
+  const db = dependencies?.db ?? await getDb();
   if (!db) throw new Error("Database is unavailable");
   if (!input.explicitSigningAction) throw new Error("An explicit signing action is required");
-  const signer = await getTenantUserById(scope.tenantId, scope.userId);
-  if (!signer?.passwordHash || !(await verifyPassword(input.credential, signer.passwordHash))) throw new Error("Credential confirmation failed");
+  const signer = dependencies?.signer ?? await getTenantUserById(scope.tenantId, scope.userId);
+  const credentialMatches = signer?.passwordHash && (dependencies?.verifyCredential ? await dependencies.verifyCredential(input.credential, signer.passwordHash) : await verifyPassword(input.credential, signer.passwordHash));
+  if (!credentialMatches) throw new Error("Credential confirmation failed");
   const id = randomUUID();
   const signedAt = new Date();
+  const recordBindingHash = recordHash({ userId: scope.userId, subjectType: input.subjectType, subjectId: input.subjectId, meaning: input.meaning, signedAt: signedAt.toISOString() });
   await db.insert(electronicSignatures).values({
     id, tenantId: scope.tenantId, subjectType: input.subjectType, subjectId: input.subjectId, signerUserId: scope.userId,
     meaning: input.meaning, intentStatement: input.intentStatement, credentialVerifiedAt: signedAt, signingActionAt: signedAt, signedAt,
-    signatureTokenHash: recordHash({ userId: scope.userId, subjectType: input.subjectType, subjectId: input.subjectId, meaning: input.meaning, signedAt: signedAt.toISOString() }),
+    signatureTokenHash: recordBindingHash,
     status: "recorded", createdBy: scope.userId,
   });
-  await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "electronic_signature", entityId: id,
+  await (dependencies?.appendAudit ?? appendAuditEvent)({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "electronic_signature", entityId: id,
     eventType: "signature.recorded", operation: "create", oldValue: null, newValue: { subjectType: input.subjectType, subjectId: input.subjectId, meaning: input.meaning }, reason: "Immutable electronic signature created" });
-  return { id };
+  return { id, recordBindingHash, signedAt };
 }
 
 export async function findLocalUser(email: string, tenantSlug?: string) {
