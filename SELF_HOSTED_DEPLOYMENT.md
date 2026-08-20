@@ -6,7 +6,7 @@ This repository includes a **three-service Docker Compose stack**: the Node.js a
 |---|---|---|
 | `app` | React build, Express/tRPC API, JWT validation, tenant-scoped authorization | None; designed to be replaced safely |
 | `mysql` | Authoritative transactional and compliance data | Named `mysql_data` volume |
-| `nginx` | Reverse proxy, basic API rate limiting, response security headers | Configuration from a read-only template |
+| `nginx` | Reverse proxy, edge rate limiting, request-size cap, and response security headers | Configuration from a read-only template |
 
 ## First Deployment
 
@@ -20,6 +20,8 @@ Start the environment with `docker compose up -d --build`. Once MySQL is healthy
 
 The supplied Nginx configuration intentionally listens on HTTP only, allowing a VPS operator to choose their organization’s certificate-management approach. Before production use, terminate TLS in Nginx or a trusted network edge, redirect HTTP to HTTPS, and update `APP_URL` to the canonical `https://` URL. Restrict firewall ingress to ports 80 and 443, allow SSH only from approved administration networks, set host time synchronization to UTC/NTP, and perform encrypted, restore-tested backups of the `mysql_data` volume.
 
+The application disables Express fingerprinting, caps JSON/form requests at 1 MB, applies production security headers, disables API caching, and uses an in-process 300-request-per-minute application API limit. Nginx applies the independent edge limit of 20 requests per second with a bounded burst. The reverse proxy caps request bodies at 6 MB, which accommodates the 5 MB receipt-photo policy while limiting oversized request exposure. Set `TRUST_PROXY=true` only when this supplied Nginx proxy is the immediate and trusted source of forwarded client IP headers.
+
 | Variable | Purpose | Example |
 |---|---|---|
 | `MYSQL_DATABASE` | Application database name | `pharmaflow` |
@@ -30,6 +32,7 @@ The supplied Nginx configuration intentionally listens on HTTP only, allowing a 
 | `APP_PORT` | Internal Node.js listener consumed by Nginx | `3000` |
 | `PUBLIC_HTTP_PORT` | Host port published by Nginx | `80` |
 | `APP_URL` | Canonical public application URL | `https://crm.example.com` |
+| `TRUST_PROXY` | Trust the immediate Nginx proxy for client-IP rate limiting | `true` |
 | `OSM_TILE_BACKEND` | Internal URL of the organization’s self-hosted OpenStreetMap tile service | `http://tiles:8080/` |
 | `OSRM_BASE_URL` | Internal URL of the self-hosted OSRM service | `http://osrm:5000` |
 | `OSRM_DATA_DIR` / `OSRM_DATASET` | Host directory and prepared regional OSRM dataset name | `./osrm-data` / `region-latest.osrm` |
@@ -63,3 +66,17 @@ Use a controlled non-production tenant record on the target MySQL instance to ex
 The foundation applies strict application-side tenant predicates and role checks before tenant queries. Global super-admin operations use a separate procedure class and do not grant a tenant user cross-tenant access. Regulated visit logs, sample transactions, electronic signatures, and audit events have no update or deletion procedures. Corrections must use a newly inserted superseding or compensating record, while employee and tenant removal is represented by a lifecycle status transition plus a hash-linked audit event.
 
 This architecture is designed to support later validation work, but **does not itself certify the deployment as compliant with 21 CFR Part 11**. Formal validation requires the customer’s controlled SOPs, risk assessment, access reviews, qualification evidence, deployment controls, training records, and retained validation documentation.
+
+## Multi-Tenant Operations and Provisioning
+
+The platform operator creates tenant companies only through the **Tenant Management** workspace, available exclusively to a `super_admin`. Provisioning creates a new tenant identifier, plan tier, region, first tenant administrator, default role definitions, and a hash-linked audit event in one transaction. The first administrator receives no platform-wide privileges; all tenant operations use that tenant identifier as a mandatory query predicate.
+
+Use a unique DNS name or subdomain only as a routing convenience; it is not the tenant security boundary. Tenant separation is enforced by server-side tenant scope resolution, procedure role gates, foreign-key ownership, and audit evidence. Operators must use status lifecycle changes to suspend or archive tenant access rather than deleting tenant data. Before an operator changes a plan tier or tenant status, they must record a specific reason, which is included in the platform audit trail.
+
+| Operator activity | Required control |
+|---|---|
+| Provision a company | Use the super-admin Tenant Management form; verify the generated tenant, admin, plan, and region. |
+| Suspend a company | Use a documented reason and verify tenant users cannot invoke protected tenant procedures. |
+| Rotate credentials | Rotate application, MySQL, JWT, and optional provider credentials through the VPS secret-management process; do not commit `.env`. |
+| Apply a release | Take an encrypted backup, review migration SQL, apply migrations, run `pnpm check && pnpm test`, then retain the release/change-control evidence. |
+| Review access | Run periodic tenant access reviews from the Compliance Review workspace and resolve findings under the customer’s SOP. |

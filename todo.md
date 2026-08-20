@@ -156,3 +156,8 @@
 - [x] Build the administrator audit review, access-review, change-control, and sample chain-of-custody reporting workspace.
 - [x] Produce IQ/OQ/PQ-oriented compliance module documentation and executable validation tests.
 - [x] Verify the strict compliance layer and save the release checkpoint.
+- [x] Audit every API surface for input validation, rate limiting, RBAC enforcement, and tenant-isolation coverage.
+- [x] Implement endpoint rate limiting, security headers, request-size controls, and remaining authorization hardening.
+- [x] Finalize super-admin tenant provisioning, status lifecycle, and operator visibility controls.
+- [x] Update the single-VPS Docker Compose deployment runbook and multi-tenant operations guidance.
+- [x] Add security and tenant-boundary regression coverage, validate the system, and save the hardening release checkpoint.
