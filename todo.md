@@ -204,3 +204,5 @@
 - [x] Build a self-hosted integration gateway MVP with versioned API keys and audited outbound webhook controls.
 - [x] Update the Arabic full-system review only with verified improvements; retain staging, macOS, and DAST evidence as deferred.
 - [x] Validate all delivered remediation work and save the release checkpoint.
+- [x] Write a detailed Arabic setup and usage guide covering local development, Docker Compose, environment configuration, roles, workflows, and operating safeguards.
+- [x] Validate documented commands and publish the setup and usage guide to the private GitHub repository.
