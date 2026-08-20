@@ -168,7 +168,7 @@
 - [x] Assess representative GPS/map and dashboard performance characteristics without fabricating production-scale results.
 - [x] Produce and deliver the structured Arabic full-system review report with status, evidence, risks, and prioritized fixes.
 - [x] Establish reproducible performance, E2E, compliance-operation, and distributed-security test boundaries without fabricating unavailable environment results.
-- [ ] Deferred until an approved staging MySQL dataset is available: execute representative tenant-scoped dashboard and GPS/geofence benchmarks and add only evidence-based index changes.
+- [x] Prepare a non-destructive staging-only dashboard and GPS benchmark harness; execution and index decisions remain deferred until an approved dataset is available.
 - [x] Add a locally runnable web E2E suite and document the required Android/iOS emulator test harness for mobile offline/GPS validation.
 - [x] Create executable compliance-operation and API security validation runbooks for NTP, MySQL backup/restore, DAST, and multi-instance distributed rate limiting.
 - [x] Add MVP forecasting, procurement, fleet maintenance/fuel, events, coaching, and Arabic/English localization foundations in prioritized increments.
