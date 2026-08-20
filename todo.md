@@ -191,5 +191,5 @@
 - [x] Move language selection to the user profile menu and validate RTL alignment for the updated shared shell.
 - [x] Validate and save the login, terminology, and profile-language update.
 - [x] Confirm GitHub account access, repository owner, repository name, and visibility for source publication.
-- [ ] Prepare the current validated project source and create a new GitHub repository.
-- [ ] Verify the remote repository contents and deliver its URL.
+- [x] Prepare the current validated project source and create a new GitHub repository.
+- [x] Verify the remote repository contents and deliver its URL.
