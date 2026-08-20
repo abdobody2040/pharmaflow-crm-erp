@@ -335,6 +335,9 @@ export const electronicSignatures = mysqlTable(
     signerUserId: int("signerUserId").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
     meaning: mysqlEnum("meaning", ["authorship", "approval", "review", "attestation"]).notNull(),
     intentStatement: varchar("intentStatement", { length: 500 }).notNull(),
+    /** Legacy signatures may be null; new two-component signing procedures always populate both values. */
+    credentialVerifiedAt: timestamp("credentialVerifiedAt"),
+    signingActionAt: timestamp("signingActionAt"),
     signatureTokenHash: varchar("signatureTokenHash", { length: 128 }).notNull(),
     signedAt: timestamp("signedAt").defaultNow().notNull(),
     status: mysqlEnum("status", complianceStatuses).notNull().default("recorded"),
@@ -343,6 +346,55 @@ export const electronicSignatures = mysqlTable(
   },
   table => [index("electronic_signatures_tenant_subject_idx").on(table.tenantId, table.subjectType, table.subjectId), index("electronic_signatures_tenant_signed_idx").on(table.tenantId, table.signedAt)],
 );
+
+/** Immutable reason-for-change linkage. Regulated records are superseded, never overwritten. */
+export const regulatedRecordRevisions = mysqlTable("regulatedRecordRevisions", {
+  id: tenantRecordId("id").primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  recordType: mysqlEnum("recordType", ["visit_log", "sample_transaction", "electronic_signature"]).notNull(),
+  originalRecordId: varchar("originalRecordId", { length: 36 }).notNull(),
+  replacementRecordId: varchar("replacementRecordId", { length: 36 }).notNull(),
+  reasonForChange: varchar("reasonForChange", { length: 500 }).notNull(),
+  revisionKind: mysqlEnum("revisionKind", ["correction", "void", "supersession"]).notNull(),
+  effectiveAt: timestamp("effectiveAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("regulated_revisions_tenant_record_idx").on(table.tenantId, table.recordType, table.originalRecordId), index("regulated_revisions_tenant_created_idx").on(table.tenantId, table.createdAt)]);
+
+/** Immutable access-review evidence, generated from the effective tenant role and account status inventory. */
+export const accessReviewReports = mysqlTable("accessReviewReports", {
+  id: tenantRecordId("id").primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  scope: mysqlEnum("scope", ["tenant", "regulated_workflows", "privileged_access"]).notNull(),
+  reportPeriodStart: timestamp("reportPeriodStart").notNull(),
+  reportPeriodEnd: timestamp("reportPeriodEnd").notNull(),
+  accessSnapshot: json("accessSnapshot").notNull(),
+  findings: json("findings").notNull(),
+  status: mysqlEnum("status", ["generated", "reviewed", "accepted"]).notNull().default("generated"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  reviewedBy: int("reviewedBy").references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("access_reviews_tenant_created_idx").on(table.tenantId, table.createdAt), index("access_reviews_tenant_status_idx").on(table.tenantId, table.status)]);
+
+/** Append-only change-control evidence for validated workflow and business-rule modifications. */
+export const workflowChangeControls = mysqlTable("workflowChangeControls", {
+  id: tenantRecordId("id").primaryKey(),
+  tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  workflowKey: varchar("workflowKey", { length: 128 }).notNull(),
+  changeTitle: varchar("changeTitle", { length: 255 }).notNull(),
+  rationale: text("rationale").notNull(),
+  riskAssessment: text("riskAssessment").notNull(),
+  validationImpact: text("validationImpact").notNull(),
+  beforeState: json("beforeState").notNull(),
+  proposedState: json("proposedState").notNull(),
+  status: mysqlEnum("status", ["proposed", "approved", "implemented", "rejected", "retired"]).notNull().default("proposed"),
+  approvedAt: timestamp("approvedAt"),
+  implementedAt: timestamp("implementedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  approvedBy: int("approvedBy").references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+}, table => [index("workflow_changes_tenant_status_idx").on(table.tenantId, table.status), index("workflow_changes_tenant_workflow_idx").on(table.tenantId, table.workflowKey, table.createdAt)]);
 
 export type Tenant = typeof tenants.$inferSelect;
 export type User = typeof users.$inferSelect;

@@ -1,57 +1,46 @@
+import { randomUUID } from "crypto";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import {
-  createSampleTransaction,
-  createSignature,
-  createVisit,
-  listSampleTransactions,
-  listSignatures,
-  listVisits,
-} from "../db";
+import { accessReviewReports, anomalyAlerts, auditEvents, regulatedRecordRevisions, roles, sampleTransactions, users, workflowChangeControls } from "../../drizzle/schema";
+import { appendAuditEvent, createSampleTransaction, createSignature, createVisit, getDb, listSampleTransactions, listSignatures, listVisits } from "../db";
 import { resolveTenantScope } from "../security/access";
 import { router, tenantRoleProcedure } from "../_core/trpc";
 
 const readableRoles = ["admin", "manager", "exec"] as const;
 const operationalRoles = ["admin", "manager", "rep"] as const;
+const complianceAdmins = ["admin", "exec"] as const;
 
 export const complianceRouter = router({
   visits: router({
     list: tenantRoleProcedure(readableRoles).query(({ ctx }) => listVisits(resolveTenantScope(ctx.user!))),
-    create: tenantRoleProcedure(operationalRoles).input(z.object({
-      accountName: z.string().trim().min(2).max(255),
-      accountId: z.string().uuid().optional(),
-      cyclePlanId: z.string().uuid().optional(),
-      plannedVisitId: z.string().uuid().optional(),
-      objective: z.string().trim().min(2).max(5000),
-      productsDiscussed: z.array(z.string().trim().min(1).max(120)).min(1).max(40),
-      sampleTransactionIds: z.array(z.string().uuid()).max(100).optional(),
-      nextSteps: z.string().trim().max(5000).optional(),
-      eSignatureId: z.string().uuid().optional(),
-      occurredAt: z.date(),
-      supersedesId: z.string().uuid().optional(),
-    })).mutation(({ ctx, input }) => createVisit(resolveTenantScope(ctx.user!), input)),
+    create: tenantRoleProcedure(operationalRoles).input(z.object({ accountName: z.string().trim().min(2).max(255), accountId: z.string().uuid().optional(), cyclePlanId: z.string().uuid().optional(), plannedVisitId: z.string().uuid().optional(), objective: z.string().trim().min(2).max(5000), productsDiscussed: z.array(z.string().trim().min(1).max(120)).min(1).max(40), sampleTransactionIds: z.array(z.string().uuid()).max(100).optional(), nextSteps: z.string().trim().max(5000).optional(), eSignatureId: z.string().uuid().optional(), occurredAt: z.date(), supersedesId: z.string().uuid().optional(), reasonForChange: z.string().trim().min(10).max(500).optional() }).superRefine((value, issue) => { if (value.supersedesId && !value.reasonForChange) issue.addIssue({ code: "custom", message: "A reason for change is required when superseding a regulated visit" }); })).mutation(({ ctx, input }) => createVisit(resolveTenantScope(ctx.user!), input)),
   }),
   samples: router({
     list: tenantRoleProcedure(readableRoles).query(({ ctx }) => listSampleTransactions(resolveTenantScope(ctx.user!))),
-    create: tenantRoleProcedure(operationalRoles).input(z.object({
-      transactionType: z.enum(["allocation", "handoff", "return", "adjustment"]),
-      productName: z.string().trim().min(2).max(255),
-      lotNumber: z.string().trim().min(1).max(128),
-      expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      quantity: z.string().regex(/^\d+(\.\d{1,3})?$/).max(16),
-      toUserId: z.number().int().positive().optional(),
-      visitLogId: z.string().uuid().optional(),
-      occurredAt: z.date(),
-      compensatesId: z.string().uuid().optional(),
-    })).mutation(({ ctx, input }) => createSampleTransaction(resolveTenantScope(ctx.user!), input)),
+    create: tenantRoleProcedure(operationalRoles).input(z.object({ transactionType: z.enum(["allocation", "handoff", "return", "adjustment"]), productName: z.string().trim().min(2).max(255), lotNumber: z.string().trim().min(1).max(128), expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), quantity: z.string().regex(/^\d+(\.\d{1,3})?$/).max(16), toUserId: z.number().int().positive().optional(), visitLogId: z.string().uuid().optional(), occurredAt: z.date(), compensatesId: z.string().uuid().optional(), reasonForChange: z.string().trim().min(10).max(500).optional() }).superRefine((value, issue) => { if (value.compensatesId && !value.reasonForChange) issue.addIssue({ code: "custom", message: "A reason for change is required when compensating a regulated sample transaction" }); })).mutation(({ ctx, input }) => createSampleTransaction(resolveTenantScope(ctx.user!), input)),
   }),
   signatures: router({
     list: tenantRoleProcedure(readableRoles).query(({ ctx }) => listSignatures(resolveTenantScope(ctx.user!))),
-    create: tenantRoleProcedure(operationalRoles).input(z.object({
-      subjectType: z.string().trim().min(2).max(96),
-      subjectId: z.string().uuid(),
-      meaning: z.enum(["authorship", "approval", "review", "attestation"]),
-      intentStatement: z.string().trim().min(5).max(500),
-      signatureSecret: z.string().min(6).max(128),
-    })).mutation(({ ctx, input }) => createSignature(resolveTenantScope(ctx.user!), input)),
+    create: tenantRoleProcedure(operationalRoles).input(z.object({ subjectType: z.string().trim().min(2).max(96), subjectId: z.string().uuid(), meaning: z.enum(["authorship", "approval", "review", "attestation"]), intentStatement: z.string().trim().min(5).max(500), credential: z.string().min(8).max(128), explicitSigningAction: z.literal(true) })).mutation(({ ctx, input }) => createSignature(resolveTenantScope(ctx.user!), input)),
   }),
+  audit: router({
+    list: tenantRoleProcedure(readableRoles).input(z.object({ entityType: z.string().max(96).optional(), limit: z.number().int().min(1).max(500).default(100) }).optional()).query(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) return []; const rows = await db.select().from(auditEvents).where(and(eq(auditEvents.tenantId, scope.tenantId), ...(input?.entityType ? [eq(auditEvents.entityType, input.entityType)] : []))).orderBy(desc(auditEvents.createdAt)).limit(input?.limit ?? 100); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "audit_log", entityId: "tenant", eventType: "audit.reviewed", operation: "access", oldValue: null, newValue: { count: rows.length }, reason: "Compliance audit-log review" }); return rows; }),
+  }),
+  accessReviews: router({
+    list: tenantRoleProcedure(complianceAdmins).query(async ({ ctx }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); return db ? db.select().from(accessReviewReports).where(eq(accessReviewReports.tenantId, scope.tenantId)).orderBy(desc(accessReviewReports.createdAt)) : []; }),
+    generate: tenantRoleProcedure(complianceAdmins).input(z.object({ scope: z.enum(["tenant", "regulated_workflows", "privileged_access"]), reportPeriodStart: z.date(), reportPeriodEnd: z.date() })).mutation(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) throw new Error("Database unavailable"); const members = await db.select({ id: users.id, name: users.name, email: users.email, role: users.role, status: users.status, lastSignedIn: users.lastSignedIn }).from(users).where(eq(users.tenantId, scope.tenantId)); const roleDefinitions = await db.select({ code: roles.code, permissions: roles.permissions }).from(roles).where(eq(roles.tenantId, scope.tenantId)); const accessSnapshot = members.map(member => ({ ...member, effectivePermissions: roleDefinitions.find(definition => definition.code === member.role)?.permissions ?? [], regulatedAccess: ["admin", "manager", "rep", "exec"].includes(member.role) ? ["visits", "samples", "signatures"] : [] })); const privileged = accessSnapshot.filter(member => ["admin", "manager", "exec"].includes(member.role)); const findings = privileged.filter(member => member.status !== "active").map(member => ({ severity: "high", userId: member.id, finding: "Inactive privileged account requires disposition" })); const id = randomUUID(); await db.insert(accessReviewReports).values({ id, tenantId: scope.tenantId, scope: input.scope, reportPeriodStart: input.reportPeriodStart, reportPeriodEnd: input.reportPeriodEnd, accessSnapshot, findings, createdBy: scope.userId }); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "access_review", entityId: id, eventType: "access_review.generated", operation: "create", oldValue: null, newValue: { memberCount: members.length, findingCount: findings.length }, reason: "Periodic access-review report generated" }); return { id, memberCount: members.length, findingCount: findings.length }; }),
+    accept: tenantRoleProcedure(complianceAdmins).input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [report] = await db.select().from(accessReviewReports).where(and(eq(accessReviewReports.id, input.id), eq(accessReviewReports.tenantId, scope.tenantId))).limit(1); if (!report) throw new Error("Access review was not found in the active tenant"); await db.update(accessReviewReports).set({ status: "accepted", reviewedAt: new Date(), reviewedBy: scope.userId }).where(and(eq(accessReviewReports.id, input.id), eq(accessReviewReports.tenantId, scope.tenantId))); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "access_review", entityId: input.id, eventType: "access_review.accepted", operation: "status_change", oldValue: { status: report.status }, newValue: { status: "accepted" }, reason: "Access review accepted by authorized reviewer" }); return { success: true }; }),
+  }),
+  changes: router({
+    list: tenantRoleProcedure(complianceAdmins).query(async ({ ctx }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); return db ? db.select().from(workflowChangeControls).where(eq(workflowChangeControls.tenantId, scope.tenantId)).orderBy(desc(workflowChangeControls.createdAt)) : []; }),
+    propose: tenantRoleProcedure(complianceAdmins).input(z.object({ workflowKey: z.string().trim().min(3).max(128), changeTitle: z.string().trim().min(5).max(255), rationale: z.string().trim().min(10).max(10000), riskAssessment: z.string().trim().min(10).max(10000), validationImpact: z.string().trim().min(10).max(10000), beforeState: z.record(z.string(), z.unknown()), proposedState: z.record(z.string(), z.unknown()) })).mutation(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) throw new Error("Database unavailable"); const id = randomUUID(); await db.insert(workflowChangeControls).values({ id, tenantId: scope.tenantId, ...input, createdBy: scope.userId }); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "workflow_change", entityId: id, eventType: "workflow_change.proposed", operation: "create", oldValue: input.beforeState, newValue: input.proposedState, reason: input.rationale }); return { id }; }),
+    approve: tenantRoleProcedure(["admin"] as const).input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) throw new Error("Database unavailable"); const [change] = await db.select().from(workflowChangeControls).where(and(eq(workflowChangeControls.id, input.id), eq(workflowChangeControls.tenantId, scope.tenantId))).limit(1); if (!change || change.status !== "proposed") throw new Error("Only a proposed active-tenant change control can be approved"); await db.update(workflowChangeControls).set({ status: "approved", approvedAt: new Date(), approvedBy: scope.userId }).where(and(eq(workflowChangeControls.id, input.id), eq(workflowChangeControls.tenantId, scope.tenantId))); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "workflow_change", entityId: input.id, eventType: "workflow_change.approved", operation: "status_change", oldValue: { status: "proposed" }, newValue: { status: "approved" }, reason: "Authorized change-control approval" }); return { success: true }; }),
+  }),
+  custody: router({
+    report: tenantRoleProcedure(readableRoles).input(z.object({ lotNumber: z.string().trim().max(128).optional() }).optional()).query(async ({ ctx, input }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); if (!db) return []; const records = await db.select().from(sampleTransactions).where(and(eq(sampleTransactions.tenantId, scope.tenantId), ...(input?.lotNumber ? [eq(sampleTransactions.lotNumber, input.lotNumber)] : []))).orderBy(sampleTransactions.occurredAt); await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "sample_chain_of_custody", entityId: input?.lotNumber ?? "all_lots", eventType: "sample.custody_report_viewed", operation: "access", oldValue: null, newValue: { recordCount: records.length }, reason: "Sample distribution chain-of-custody report viewed" }); return records; }),
+  }),
+  revisions: router({
+    list: tenantRoleProcedure(readableRoles).query(async ({ ctx }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); return db ? db.select().from(regulatedRecordRevisions).where(eq(regulatedRecordRevisions.tenantId, scope.tenantId)).orderBy(desc(regulatedRecordRevisions.createdAt)) : []; }),
+  }),
+  alerts: router({ count: tenantRoleProcedure(complianceAdmins).query(async ({ ctx }) => { const scope = resolveTenantScope(ctx.user!); const db = await getDb(); return db ? (await db.select().from(anomalyAlerts).where(and(eq(anomalyAlerts.tenantId, scope.tenantId), eq(anomalyAlerts.status, "open")))).length : 0; }) }),
 });

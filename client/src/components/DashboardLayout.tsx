@@ -35,7 +35,7 @@ const sections: Array<{ title: string; items: MenuItem[] }> = [
     { label: "Sample Transactions", path: "/samples", icon: Activity, roles: ["admin", "manager", "exec"] },
     { label: "E-Signatures", path: "/signatures", icon: FileSignature, roles: ["admin", "manager", "exec"] },
   ] },
-  { title: "Governance", items: [{ label: "Settings", path: "/settings", icon: Settings }] },
+  { title: "Governance", items: [{ label: "Compliance Review", path: "/compliance", icon: ShieldCheck, roles: ["admin", "exec"] }, { label: "Settings", path: "/settings", icon: Settings }] },
 ];
 
 function initials(name: string | null | undefined) {

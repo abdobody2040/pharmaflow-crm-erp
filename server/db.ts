@@ -5,6 +5,7 @@ import {
   auditEvents,
   electronicSignatures,
   InsertUser,
+  regulatedRecordRevisions,
   roles,
   sampleTransactions,
   tenants,
@@ -15,7 +16,7 @@ import {
   visitSampleLinks,
 } from "../drizzle/schema";
 import type { TenantScope } from "./security/access";
-import { recordHash } from "./security/localJwt";
+import { recordHash, verifyPassword } from "./security/localJwt";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -268,8 +269,9 @@ export async function appendAuditEvent(input: AuditEventInput) {
     .where(eq(auditEvents.tenantId, input.tenantId))
     .orderBy(desc(auditEvents.createdAt))
     .limit(1);
-  const event = { ...input, previousHash: previous?.eventHash ?? null };
-  await db.insert(auditEvents).values({ id: randomUUID(), ...event, eventHash: recordHash(event) });
+  const createdAt = new Date();
+  const event = { ...input, createdAt: createdAt.toISOString(), previousHash: previous?.eventHash ?? null };
+  await db.insert(auditEvents).values({ id: randomUUID(), ...input, createdAt, previousHash: event.previousHash, eventHash: recordHash(event) });
 }
 
 export async function listVisits(scope: TenantScope) {
@@ -279,7 +281,7 @@ export async function listVisits(scope: TenantScope) {
 }
 
 export async function createVisit(scope: TenantScope, input: {
-  accountName: string; accountId?: string; cyclePlanId?: string; plannedVisitId?: string; objective: string; productsDiscussed: string[]; sampleTransactionIds?: string[]; nextSteps?: string; eSignatureId?: string; occurredAt: Date; supersedesId?: string;
+  accountName: string; accountId?: string; cyclePlanId?: string; plannedVisitId?: string; objective: string; productsDiscussed: string[]; sampleTransactionIds?: string[]; nextSteps?: string; eSignatureId?: string; occurredAt: Date; supersedesId?: string; reasonForChange?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is unavailable");
@@ -289,6 +291,7 @@ export async function createVisit(scope: TenantScope, input: {
     objective: input.objective, productsDiscussed: input.productsDiscussed, samplesGiven: input.sampleTransactionIds ?? null, nextSteps: input.nextSteps ?? null, eSignatureId: input.eSignatureId ?? null,
     occurredAt: input.occurredAt, supersedesId: input.supersedesId ?? null, status: "recorded", createdBy: scope.userId,
   });
+  if (input.supersedesId) await db.insert(regulatedRecordRevisions).values({ id: randomUUID(), tenantId: scope.tenantId, recordType: "visit_log", originalRecordId: input.supersedesId, replacementRecordId: id, reasonForChange: input.reasonForChange!, revisionKind: "supersession", createdBy: scope.userId });
   if (input.sampleTransactionIds?.length) {
     const samples = await db.select({ id: sampleTransactions.id }).from(sampleTransactions)
       .where(and(eq(sampleTransactions.tenantId, scope.tenantId), inArray(sampleTransactions.id, input.sampleTransactionIds)));
@@ -312,7 +315,7 @@ export async function listSampleTransactions(scope: TenantScope) {
 
 export async function createSampleTransaction(scope: TenantScope, input: {
   transactionType: "allocation" | "handoff" | "return" | "adjustment"; productName: string; lotNumber: string;
-  expiryDate: string; quantity: string; toUserId?: number; visitLogId?: string; occurredAt: Date; compensatesId?: string;
+  expiryDate: string; quantity: string; toUserId?: number; visitLogId?: string; occurredAt: Date; compensatesId?: string; reasonForChange?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is unavailable");
@@ -322,6 +325,7 @@ export async function createSampleTransaction(scope: TenantScope, input: {
     expiryDate: new Date(`${input.expiryDate}T00:00:00.000Z`), quantity: input.quantity, fromUserId: scope.userId, toUserId: input.toUserId ?? null,
     visitLogId: input.visitLogId ?? null, occurredAt: input.occurredAt, compensatesId: input.compensatesId ?? null, status: "recorded", createdBy: scope.userId,
   });
+  if (input.compensatesId) await db.insert(regulatedRecordRevisions).values({ id: randomUUID(), tenantId: scope.tenantId, recordType: "sample_transaction", originalRecordId: input.compensatesId, replacementRecordId: id, reasonForChange: input.reasonForChange!, revisionKind: "correction", createdBy: scope.userId });
   await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "sample_transaction", entityId: id,
     eventType: "sample.recorded", operation: "create", oldValue: null, newValue: { lotNumber: input.lotNumber, quantity: input.quantity }, reason: "Immutable chain-of-custody record created" });
   return { id };
@@ -334,14 +338,19 @@ export async function listSignatures(scope: TenantScope) {
 }
 
 export async function createSignature(scope: TenantScope, input: {
-  subjectType: string; subjectId: string; meaning: "authorship" | "approval" | "review" | "attestation"; intentStatement: string; signatureSecret: string;
+  subjectType: string; subjectId: string; meaning: "authorship" | "approval" | "review" | "attestation"; intentStatement: string; credential: string; explicitSigningAction: true;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is unavailable");
+  if (!input.explicitSigningAction) throw new Error("An explicit signing action is required");
+  const signer = await getTenantUserById(scope.tenantId, scope.userId);
+  if (!signer?.passwordHash || !(await verifyPassword(input.credential, signer.passwordHash))) throw new Error("Credential confirmation failed");
   const id = randomUUID();
+  const signedAt = new Date();
   await db.insert(electronicSignatures).values({
     id, tenantId: scope.tenantId, subjectType: input.subjectType, subjectId: input.subjectId, signerUserId: scope.userId,
-    meaning: input.meaning, intentStatement: input.intentStatement, signatureTokenHash: recordHash({ userId: scope.userId, secret: input.signatureSecret, signedAt: new Date().toISOString() }),
+    meaning: input.meaning, intentStatement: input.intentStatement, credentialVerifiedAt: signedAt, signingActionAt: signedAt, signedAt,
+    signatureTokenHash: recordHash({ userId: scope.userId, subjectType: input.subjectType, subjectId: input.subjectId, meaning: input.meaning, signedAt: signedAt.toISOString() }),
     status: "recorded", createdBy: scope.userId,
   });
   await appendAuditEvent({ tenantId: scope.tenantId, actorUserId: scope.userId, entityType: "electronic_signature", entityId: id,

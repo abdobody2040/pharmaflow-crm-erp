@@ -150,3 +150,9 @@
 - [x] Add direct BI role-routing and export-shape tests.
 - [x] Add direct BI tenant-isolation and KPI calculation tests for rep, manager, fleet, and executive metrics.
 - [x] Verify BI dashboards and exports, then save the BI reporting checkpoint.
+- [x] Audit regulated table immutability and define strict Part 11-style evidence, timestamp, and reason-for-change controls.
+- [x] Migrate regulated-record revision, two-component e-signature, access-review, change-control, and chain-of-custody data models.
+- [x] Implement tenant-safe compliance procedures for credential-confirmed signing, controlled revisions, access review, and workflow change control.
+- [x] Build the administrator audit review, access-review, change-control, and sample chain-of-custody reporting workspace.
+- [x] Produce IQ/OQ/PQ-oriented compliance module documentation and executable validation tests.
+- [x] Verify the strict compliance layer and save the release checkpoint.
