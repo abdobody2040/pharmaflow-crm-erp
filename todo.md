@@ -185,3 +185,8 @@
 - [x] Add disposable authenticated web E2E fixtures and critical role-safe browser scenarios.
 - [x] Document Android and iOS emulator/device execution harnesses without claiming unavailable device execution.
 - [x] Validate and save the localization and authenticated-E2E foundation update.
+- [x] Audit login feedback, profile menu, and tenant settings integration points for the UX and terminology update.
+- [x] Add tenant-scoped specialized Arabic/English terminology storage, RBAC procedures, administration UI, and tests.
+- [x] Improve local login loading feedback and user-friendly invalid-authentication error guidance with regression coverage.
+- [x] Move language selection to the user profile menu and validate RTL alignment for the updated shared shell.
+- [x] Validate and save the login, terminology, and profile-language update.

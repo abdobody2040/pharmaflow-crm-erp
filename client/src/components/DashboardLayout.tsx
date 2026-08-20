@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Activity, BadgeCheck, Building2, ChevronRight, ClipboardList, ContactRound, FileSignature,
-  BarChart3, KanbanSquare, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, Sparkles, UsersRound,
+  BarChart3, KanbanSquare, Languages, LayoutDashboard, LogOut, MapPinned, Megaphone, Menu, Route, Settings, ShieldCheck, Sparkles, UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -36,7 +36,7 @@ const sections: Array<{ title: string; items: MenuItem[] }> = [
     { label: "Sample Transactions", path: "/samples", icon: Activity, roles: ["admin", "manager", "exec"] },
     { label: "E-Signatures", path: "/signatures", icon: FileSignature, roles: ["admin", "manager", "exec"] },
   ] },
-  { title: "Governance", items: [{ label: "Compliance Review", path: "/compliance", icon: ShieldCheck, roles: ["admin", "exec"] }, { label: "Settings", path: "/settings", icon: Settings }] },
+  { title: "Governance", items: [{ label: "Compliance Review", path: "/compliance", icon: ShieldCheck, roles: ["admin", "exec"] }, { label: "Terminology", path: "/terminology", icon: Settings, roles: ["admin", "manager"] }, { label: "Settings", path: "/settings", icon: Settings }] },
 ];
 
 function initials(name: string | null | undefined) {
@@ -48,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { language, toggleLanguage, t } = useLanguage();
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   if (loading) return <div className="min-h-screen bg-[#f6f7f9]" />;
   if (!user) return <LoginPage />;
@@ -61,7 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] text-[#101828]">
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[284px] flex-col border-r border-slate-200/70 bg-[#0c162b] px-4 py-5 text-slate-200 transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={"fixed inset-y-0 z-50 flex w-[284px] flex-col border-slate-200/70 bg-[#0c162b] px-4 py-5 text-slate-200 transition-transform duration-200 lg:translate-x-0 " + (language === "ar" ? "right-0 border-l " : "left-0 border-r ") + (mobileOpen ? "translate-x-0" : language === "ar" ? "translate-x-full" : "-translate-x-full")}>
         <div className="mb-9 flex items-center gap-3 px-2">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#49d5a7] to-[#1d9c87] shadow-[0_8px_24px_rgba(51,211,161,.28)]">
             <ShieldCheck className="h-5 w-5 text-[#07152a]" strokeWidth={2.4} />
@@ -80,10 +81,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {section.items.map(item => {
                   const active = location === item.path;
                   return <button key={item.path} onClick={() => { setLocation(item.path); setMobileOpen(false); }}
-                    className={`group flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-all ${active ? "bg-white/10 font-semibold text-white shadow-sm" : "text-slate-400 hover:bg-white/[.055] hover:text-slate-100"}`}>
-                    <item.icon className={`h-[18px] w-[18px] ${active ? "text-[#52d7ae]" : "text-slate-500 group-hover:text-slate-300"}`} />
+                    className={"group flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition-all rtl:text-right " + (active ? "bg-white/10 font-semibold text-white shadow-sm" : "text-slate-400 hover:bg-white/[.055] hover:text-slate-100")}>
+                    <item.icon className={"h-[18px] w-[18px] " + (active ? "text-[#52d7ae]" : "text-slate-500 group-hover:text-slate-300")} />
                     <span className="flex-1">{item.label}</span>
-                    {active && <ChevronRight className="h-4 w-4 text-[#52d7ae]" />}
+                    {active && <ChevronRight className="h-4 w-4 text-[#52d7ae] rtl:rotate-180" />}
                   </button>;
                 })}
               </div>
@@ -91,21 +92,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[.045] p-3">
+        <div className="relative rounded-2xl border border-white/10 bg-white/[.045] p-3">
+          {profileOpen && <div className="absolute bottom-[calc(100%+0.5rem)] left-0 right-0 z-10 rounded-2xl border border-white/10 bg-[#172440] p-2 shadow-xl"><button onClick={toggleLanguage} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-100 transition hover:bg-white/10 rtl:text-right"><Languages className="h-4 w-4 text-[#77e6c2]" />{language === "ar" ? "English" : "العربية"}</button><button onClick={logout} className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-500/15 rtl:text-right"><LogOut className="h-4 w-4" />{language === "ar" ? "تسجيل الخروج" : "Sign out"}</button></div>}
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9 border border-white/10 bg-slate-700"><AvatarFallback className="bg-slate-700 text-xs font-bold text-[#77e6c2]">{initials(user.name)}</AvatarFallback></Avatar>
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-white">{user.name ?? "Platform user"}</p><p className="mt-0.5 truncate text-[11px] font-medium capitalize text-slate-400">{user.role.replace("_", " ")}</p></div>
-            <button onClick={logout} className="rounded-lg p-2 text-slate-500 transition hover:bg-white/10 hover:text-white" aria-label="Sign out"><LogOut className="h-4 w-4" /></button>
+            <button onClick={() => setProfileOpen(open => !open)} aria-expanded={profileOpen} aria-label={language === "ar" ? "فتح قائمة الملف الشخصي" : "Open profile menu"} className="min-w-0 flex-1 text-left rtl:text-right"><p className="truncate text-sm font-semibold text-white">{user.name ?? "Platform user"}</p><p className="mt-0.5 truncate text-[11px] font-medium capitalize text-slate-400">{user.role.replace("_", " ")}</p></button>
+            <button onClick={() => setProfileOpen(open => !open)} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white" aria-label={language === "ar" ? "فتح قائمة الملف الشخصي" : "Open profile menu"}><ChevronRight className={"h-4 w-4 " + (profileOpen ? "rotate-90 " : "") + (language === "ar" ? "rotate-180" : "")} /></button>
           </div>
         </div>
       </aside>
 
       {mobileOpen && <button aria-label="Close navigation" className="fixed inset-0 z-40 bg-slate-950/45 lg:hidden" onClick={() => setMobileOpen(false)} />}
-      <main className="min-h-screen lg:pl-[284px]">
+      <main className={"min-h-screen " + (language === "ar" ? "lg:pr-[284px]" : "lg:pl-[284px]")}>
         <header className="sticky top-0 z-30 flex h-[78px] items-center border-b border-slate-200/80 bg-[#f6f7f9]/90 px-5 backdrop-blur-xl lg:px-9">
-          <button onClick={() => setMobileOpen(true)} className="mr-4 rounded-lg p-2 text-slate-600 hover:bg-white lg:hidden"><Menu className="h-5 w-5" /></button>
+          <button onClick={() => setMobileOpen(true)} className={(language === "ar" ? "ml-4" : "mr-4") + " rounded-lg p-2 text-slate-600 hover:bg-white lg:hidden"}><Menu className="h-5 w-5" /></button>
           <div><p className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#7d8796]">PharmaFlow / {user.role === "super_admin" ? "Platform" : "Tenant"}</p><h1 className="mt-1 text-lg font-bold tracking-[-0.02em] text-[#172033]">{currentItem}</h1></div>
-          <div className="ml-auto flex items-center gap-2"><button onClick={toggleLanguage} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm" aria-label="Change language">{t("language")}</button><div className="flex items-center gap-2 rounded-full border border-[#ccebdd] bg-[#eafaf4] px-3 py-1.5 text-xs font-semibold text-[#15745d]"><BadgeCheck className="h-4 w-4" /> {language === "ar" ? "الضوابط فعّالة" : "Controls active"}</div></div>
+          <div className="ml-auto flex items-center gap-2 rtl:mr-auto rtl:ml-0"><div className="flex items-center gap-2 rounded-full border border-[#ccebdd] bg-[#eafaf4] px-3 py-1.5 text-xs font-semibold text-[#15745d]"><BadgeCheck className="h-4 w-4" /> {language === "ar" ? "الضوابط فعّالة" : "Controls active"}</div></div>
         </header>
         <div className="mx-auto max-w-[1560px] p-5 lg:p-9">{children}</div>
       </main>

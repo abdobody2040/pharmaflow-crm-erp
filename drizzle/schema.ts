@@ -101,6 +101,24 @@ export const userRoleAssignments = mysqlTable(
   table => [index("user_role_assignments_tenant_user_idx").on(table.tenantId, table.userId), index("user_role_assignments_tenant_role_idx").on(table.tenantId, table.roleId)],
 );
 
+/** Tenant-managed terminology overrides used for specialized Arabic and English product language. */
+export const tenantTerminology = mysqlTable(
+  "tenantTerminology",
+  {
+    id: tenantRecordId("id").primaryKey(),
+    tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),
+    termKey: varchar("termKey", { length: 120 }).notNull(),
+    englishTerm: varchar("englishTerm", { length: 255 }).notNull(),
+    arabicTerm: varchar("arabicTerm", { length: 255 }).notNull(),
+    context: varchar("context", { length: 255 }),
+    status: mysqlEnum("status", ["active", "archived"]).notNull().default("active"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict", onUpdate: "restrict" }),
+  },
+  table => [uniqueIndex("tenant_terminology_tenant_key_unique").on(table.tenantId, table.termKey), index("tenant_terminology_tenant_status_idx").on(table.tenantId, table.status)],
+);
+
 export const territories = mysqlTable("territories", {
   id: tenantRecordId("id").primaryKey(),
   tenantId: varchar("tenantId", { length: 36 }).notNull().references(() => tenants.id, { onDelete: "restrict", onUpdate: "restrict" }),

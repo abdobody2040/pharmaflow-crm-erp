@@ -14,6 +14,7 @@ import { aiRouter } from "./routers/ai";
 import { analyticsRouter } from "./routers/analytics";
 import { biRouter } from "./routers/bi";
 import { expansionRouter } from "./routers/expansion";
+import { terminologyRouter } from "./routers/terminology";
 
 export const appRouter = router({
   system: systemRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   analytics: analyticsRouter,
   bi: biRouter,
   expansion: expansionRouter,
+  terminology: terminologyRouter,
 });
 
 export type AppRouter = typeof appRouter;

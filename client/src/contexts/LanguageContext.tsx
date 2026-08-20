@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 export type Language = "en" | "ar";
 const dictionary = {
@@ -17,6 +18,10 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem("pharmaflow-language") === "ar" ? "ar" : "en"));
   const originals = useRef(new WeakMap<Text, string>());
+  const auth = trpc.auth.me.useQuery();
+  const terminology = trpc.terminology.list.useQuery(undefined, { enabled: Boolean(auth.data), retry: false });
+  const termOverrides = useMemo(() => new Map((terminology.data ?? []).flatMap(term => [[term.termKey, term.arabicTerm], [term.englishTerm, term.arabicTerm]])), [terminology.data]);
+  const resolve = (english: string) => language === "ar" ? termOverrides.get(english) ?? arabicStrings[english] ?? english : english;
   useEffect(() => { document.documentElement.lang = language; document.documentElement.dir = language === "ar" ? "rtl" : "ltr"; localStorage.setItem("pharmaflow-language", language); }, [language]);
   useEffect(() => {
     const translateTree = () => {
@@ -28,13 +33,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         const original = originals.current.get(node) ?? node.textContent ?? "";
         if (!original.trim()) continue;
         if (!originals.current.has(node)) originals.current.set(node, original);
-        const translated = language === "ar" ? arabicStrings[original] ?? original : original;
+        const translated = resolve(original);
         if (node.textContent !== translated) node.textContent = translated;
       }
       document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input[placeholder], textarea[placeholder]").forEach(element => {
         const original = element.dataset.pharmaflowPlaceholder ?? element.placeholder;
         element.dataset.pharmaflowPlaceholder = original;
-        element.placeholder = language === "ar" ? arabicStrings[original] ?? original : original;
+        element.placeholder = resolve(original);
       });
     };
     translateTree();
@@ -42,6 +47,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
   }, [language]);
-  return <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage: () => setLanguage(current => current === "en" ? "ar" : "en"), t: key => dictionary[language][key], tr: english => language === "ar" ? arabicStrings[english] ?? english : english }}>{children}</LanguageContext.Provider>;
+  return <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage: () => setLanguage(current => current === "en" ? "ar" : "en"), t: key => dictionary[language][key], tr: resolve }}>{children}</LanguageContext.Provider>;
 }
 export function useLanguage() { const context = useContext(LanguageContext); if (!context) throw new Error("useLanguage must be used within LanguageProvider"); return context; }
