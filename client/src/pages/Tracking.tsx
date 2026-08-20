@@ -1,3 +1,9 @@
+import {
+  formatDate,
+  formatDateTime,
+  formatNumber,
+  formatTime,
+} from "@/lib/locale";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,8 +11,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import "leaflet/dist/leaflet.css";
-import { Circle, CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
-import { AlertTriangle, MapPinned, Navigation, Plus, Route, Timer } from "lucide-react";
+import {
+  Circle,
+  CircleMarker,
+  MapContainer,
+  Popup,
+  TileLayer,
+} from "react-leaflet";
+import {
+  AlertTriangle,
+  MapPinned,
+  Navigation,
+  Plus,
+  Route,
+  Timer,
+} from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import { AccessDenied } from "./Tenants";
 
@@ -14,15 +33,321 @@ const roles = ["admin", "manager", "exec"];
 const TILE_URL = "/tiles/{z}/{x}/{y}.png";
 
 export default function TrackingPage() {
-  const { user } = useAuth(); const utils = trpc.useUtils(); const [name, setName] = useState(""); const [latitude, setLatitude] = useState(""); const [longitude, setLongitude] = useState(""); const [radiusMeters, setRadiusMeters] = useState("200"); const [geofenceType, setGeofenceType] = useState<"territory" | "hcp_stop">("hcp_stop"); const [selectedShiftId, setSelectedShiftId] = useState("");
-  const live = trpc.tracking.live.useQuery(undefined, { enabled: !!user && roles.includes(user.role) }); const alerts = trpc.tracking.alerts.useQuery(undefined, { enabled: !!user && roles.includes(user.role) }); const fences = trpc.tracking.geofences.list.useQuery(undefined, { enabled: !!user && roles.includes(user.role) }); const trip = trpc.tracking.trip.useQuery({ shiftId: selectedShiftId || "00000000-0000-4000-8000-000000000000" }, { enabled: !!selectedShiftId && !!user && roles.includes(user.role) }); const create = trpc.tracking.geofences.create.useMutation({ onSuccess: () => { setName(""); setLatitude(""); setLongitude(""); utils.tracking.geofences.list.invalidate(); } });
+  const { user } = useAuth();
+  const utils = trpc.useUtils();
+  const [name, setName] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [radiusMeters, setRadiusMeters] = useState("200");
+  const [geofenceType, setGeofenceType] = useState<"territory" | "hcp_stop">(
+    "hcp_stop"
+  );
+  const [selectedShiftId, setSelectedShiftId] = useState("");
+  const live = trpc.tracking.live.useQuery(undefined, {
+    enabled: !!user && roles.includes(user.role),
+  });
+  const alerts = trpc.tracking.alerts.useQuery(undefined, {
+    enabled: !!user && roles.includes(user.role),
+  });
+  const fences = trpc.tracking.geofences.list.useQuery(undefined, {
+    enabled: !!user && roles.includes(user.role),
+  });
+  const trip = trpc.tracking.trip.useQuery(
+    { shiftId: selectedShiftId || "00000000-0000-4000-8000-000000000000" },
+    { enabled: !!selectedShiftId && !!user && roles.includes(user.role) }
+  );
+  const create = trpc.tracking.geofences.create.useMutation({
+    onSuccess: () => {
+      setName("");
+      setLatitude("");
+      setLongitude("");
+      utils.tracking.geofences.list.invalidate();
+    },
+  });
   if (!user || !roles.includes(user.role)) return <AccessDenied />;
-  const points = live.data?.map(row => ({ id: row.location.id, shiftId: row.location.shiftId, rep: row.rep.name ?? row.rep.email ?? `Rep ${row.rep.id}`, latitude: Number(row.location.latitude), longitude: Number(row.location.longitude), capturedAt: row.location.capturedAt, cadence: row.location.cadenceSeconds })) ?? []; const shifts = useMemo(() => Array.from(new Map(points.map(point => [point.shiftId, point])).values()), [points]); const center: [number, number] = points.length ? [points[0]!.latitude, points[0]!.longitude] : [20, 0];
-  const submit = (event: FormEvent) => { event.preventDefault(); create.mutate({ name, geofenceType, latitude: Number(latitude), longitude: Number(longitude), radiusMeters: Number(radiusMeters) }); };
-  return <div className="space-y-6"><section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#1e9274]">Location operations</p><h2 className="mt-1 text-2xl font-bold">GPS tracking & geofencing</h2><p className="mt-2 max-w-2xl text-sm text-slate-500">Live telemetry, territory/HCP proximity events, route mileage, and idle exceptions. The map requests only your own self-hosted tile path.</p></div><Badge className="h-fit border-0 bg-[#e9f8f2] px-3 py-2 text-[#168064]"><Navigation className="mr-2 h-4 w-4"/>{points.length} recent location points</Badge></section>
-    <Card className="overflow-hidden"><CardContent className="p-0"><div className="h-[440px] bg-slate-100"><MapContainer center={center} zoom={points.length ? 12 : 2} scrollWheelZoom className="h-full w-full"><TileLayer attribution="&copy; OpenStreetMap contributors" url={TILE_URL}/>{fences.data?.map(fence => <Circle key={fence.id} center={[Number(fence.latitude), Number(fence.longitude)]} radius={fence.radiusMeters} pathOptions={{ color: fence.geofenceType === "territory" ? "#5865cf" : "#168064", fillOpacity: .08 }}/>) }{points.map(point => <CircleMarker key={point.id} center={[point.latitude, point.longitude]} radius={8} pathOptions={{ color: "#0f766e", fillColor: "#4fdbc0", fillOpacity: 1 }}><Popup><strong>{point.rep}</strong><br/>{new Date(point.capturedAt).toLocaleString()}<br/>{point.cadence}s cadence</Popup></CircleMarker>)}</MapContainer></div><p className="border-t bg-slate-50 px-4 py-2 text-xs text-slate-500">Tiles: <code>/tiles/&#123;z&#125;/&#123;x&#125;/&#123;y&#125;.png</code> — configure this Nginx route to your self-hosted OpenStreetMap tile service before production release.</p></CardContent></Card>
-    <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]"><Card><CardContent className="p-5"><div className="flex items-center gap-2"><MapPinned className="h-5 w-5 text-[#178066]"/><h3 className="font-bold">Create geofence</h3></div><form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2"><Input required value={name} onChange={event => setName(event.target.value)} placeholder="Geofence name"/><select value={geofenceType} onChange={event => setGeofenceType(event.target.value as "territory" | "hcp_stop")} className="h-10 rounded-md border px-3 text-sm"><option value="hcp_stop">HCP stop</option><option value="territory">Territory</option></select><Input required value={latitude} onChange={event => setLatitude(event.target.value)} placeholder="Latitude"/><Input required value={longitude} onChange={event => setLongitude(event.target.value)} placeholder="Longitude"/><Input required value={radiusMeters} onChange={event => setRadiusMeters(event.target.value)} placeholder="Radius metres"/><Button disabled={create.isPending} className="bg-[#147d66] hover:bg-[#0f6956]"><Plus className="mr-2 h-4 w-4"/>Save geofence</Button></form><div className="mt-5 grid gap-2 sm:grid-cols-2">{fences.data?.map(fence => <div key={fence.id} className="rounded-xl bg-slate-50 p-3"><p className="text-sm font-semibold">{fence.name}</p><p className="mt-1 text-xs capitalize text-slate-500">{fence.geofenceType.replace("_", " ")} · {fence.radiusMeters}m</p></div>)}</div></CardContent></Card>
-      <Card><CardContent className="p-5"><div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-[#bf7128]"/><h3 className="font-bold">Recent geofence & idle events</h3></div><div className="mt-4 space-y-3">{alerts.data?.length ? alerts.data.map(alert => <div key={alert.id} className="rounded-xl border border-slate-100 p-3"><div className="flex items-center justify-between gap-3"><p className="font-semibold capitalize">{alert.eventType.replace("_", " ")}</p><Badge variant="outline" className="capitalize">{alert.status}</Badge></div><p className="mt-1 text-xs text-slate-500">{alert.distanceMeters ?? "—"}m · {new Date(alert.observedAt).toLocaleString()}</p></div>) : <p className="py-9 text-center text-sm text-slate-400">No geofence or idle events yet.</p>}</div></CardContent></Card></div>
-    <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]"><Card><CardContent className="p-5"><div className="flex items-center gap-2"><Route className="h-5 w-5 text-[#5865cf]"/><h3 className="font-bold">Trip history & mileage</h3></div><select value={selectedShiftId} onChange={event => setSelectedShiftId(event.target.value)} className="mt-4 h-10 w-full rounded-md border px-3 text-sm"><option value="">Choose observed shift</option>{shifts.map(shift => <option key={shift.shiftId} value={shift.shiftId}>{shift.rep} · {new Date(shift.capturedAt).toLocaleString()}</option>)}</select>{selectedShiftId && <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-[#eff8f5] p-4"><p className="text-xs font-bold uppercase tracking-wider text-[#168064]">Mileage</p><p className="mt-2 text-2xl font-bold">{((trip.data?.mileageMeters ?? 0) / 1609.344).toFixed(2)} mi</p><p className="mt-1 text-xs text-slate-500">{trip.data?.points.length ?? 0} GPS points</p></div><div className="rounded-xl bg-[#fff8ed] p-4"><p className="text-xs font-bold uppercase tracking-wider text-[#b96b22]">Idle events</p><p className="mt-2 text-2xl font-bold">{trip.data?.idleEvents.length ?? 0}</p><p className="mt-1 text-xs text-slate-500">5 min / 25m threshold</p></div></div>}</CardContent></Card><Card><CardContent className="p-5"><div className="flex items-center gap-2"><Timer className="h-5 w-5 text-[#bf7128]"/><h3 className="font-bold">Trip idle evidence</h3></div><div className="mt-4 space-y-2">{trip.data?.idleEvents.length ? trip.data.idleEvents.map(event => <div key={event.id} className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-semibold capitalize">{event.eventType.replace("_", " ")}</p><p className="mt-1 text-xs text-slate-500">{event.distanceMeters ?? "—"}m · {new Date(event.observedAt).toLocaleString()}</p></div>) : <p className="py-8 text-center text-sm text-slate-400">Choose a shift to inspect its idle evidence.</p>}</div></CardContent></Card></div>
-  </div>;
+  const points =
+    live.data?.map(row => ({
+      id: row.location.id,
+      shiftId: row.location.shiftId,
+      rep: row.rep.name ?? row.rep.email ?? `Rep ${row.rep.id}`,
+      latitude: Number(row.location.latitude),
+      longitude: Number(row.location.longitude),
+      capturedAt: row.location.capturedAt,
+      cadence: row.location.cadenceSeconds,
+    })) ?? [];
+  const shifts = useMemo(
+    () =>
+      Array.from(new Map(points.map(point => [point.shiftId, point])).values()),
+    [points]
+  );
+  const center: [number, number] = points.length
+    ? [points[0]!.latitude, points[0]!.longitude]
+    : [20, 0];
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    create.mutate({
+      name,
+      geofenceType,
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+      radiusMeters: Number(radiusMeters),
+    });
+  };
+  return (
+    <div className="space-y-6">
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[.15em] text-[#1e9274]">
+            Location operations
+          </p>
+          <h2 className="mt-1 text-2xl font-bold">GPS tracking & geofencing</h2>
+          <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            Live telemetry, territory/HCP proximity events, route mileage, and
+            idle exceptions. The map requests only your own self-hosted tile
+            path.
+          </p>
+        </div>
+        <Badge className="h-fit border-0 bg-[#e9f8f2] px-3 py-2 text-[#168064]">
+          <Navigation className="mr-2 h-4 w-4" />
+          {points.length} recent location points
+        </Badge>
+      </section>
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="h-[440px] bg-slate-100">
+            <MapContainer
+              center={center}
+              zoom={points.length ? 12 : 2}
+              scrollWheelZoom
+              className="h-full w-full"
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url={TILE_URL}
+              />
+              {fences.data?.map(fence => (
+                <Circle
+                  key={fence.id}
+                  center={[Number(fence.latitude), Number(fence.longitude)]}
+                  radius={fence.radiusMeters}
+                  pathOptions={{
+                    color:
+                      fence.geofenceType === "territory"
+                        ? "#5865cf"
+                        : "#168064",
+                    fillOpacity: 0.08,
+                  }}
+                />
+              ))}
+              {points.map(point => (
+                <CircleMarker
+                  key={point.id}
+                  center={[point.latitude, point.longitude]}
+                  radius={8}
+                  pathOptions={{
+                    color: "#0f766e",
+                    fillColor: "#4fdbc0",
+                    fillOpacity: 1,
+                  }}
+                >
+                  <Popup>
+                    <strong>{point.rep}</strong>
+                    <br />
+                    {formatDateTime(point.capturedAt)}
+                    <br />
+                    {point.cadence}s cadence
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </MapContainer>
+          </div>
+          <p className="border-t bg-slate-50 px-4 py-2 text-xs text-slate-500">
+            Tiles:{" "}
+            <code>/tiles/&#123;z&#125;/&#123;x&#125;/&#123;y&#125;.png</code> —
+            configure this Nginx route to your self-hosted OpenStreetMap tile
+            service before production release.
+          </p>
+        </CardContent>
+      </Card>
+      <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2">
+              <MapPinned className="h-5 w-5 text-[#178066]" />
+              <h3 className="font-bold">Create geofence</h3>
+            </div>
+            <form onSubmit={submit} className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Input
+                required
+                value={name}
+                onChange={event => setName(event.target.value)}
+                placeholder="Geofence name"
+              />
+              <select
+                value={geofenceType}
+                onChange={event =>
+                  setGeofenceType(
+                    event.target.value as "territory" | "hcp_stop"
+                  )
+                }
+                className="h-10 rounded-md border px-3 text-sm"
+              >
+                <option value="hcp_stop">HCP stop</option>
+                <option value="territory">Territory</option>
+              </select>
+              <Input
+                required
+                value={latitude}
+                onChange={event => setLatitude(event.target.value)}
+                placeholder="Latitude"
+              />
+              <Input
+                required
+                value={longitude}
+                onChange={event => setLongitude(event.target.value)}
+                placeholder="Longitude"
+              />
+              <Input
+                required
+                value={radiusMeters}
+                onChange={event => setRadiusMeters(event.target.value)}
+                placeholder="Radius metres"
+              />
+              <Button
+                disabled={create.isPending}
+                className="bg-[#147d66] hover:bg-[#0f6956]"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Save geofence
+              </Button>
+            </form>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {fences.data?.map(fence => (
+                <div key={fence.id} className="rounded-xl bg-slate-50 p-3">
+                  <p className="text-sm font-semibold">{fence.name}</p>
+                  <p className="mt-1 text-xs capitalize text-slate-500">
+                    {fence.geofenceType.replace("_", " ")} ·{" "}
+                    {fence.radiusMeters}m
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-[#bf7128]" />
+              <h3 className="font-bold">Recent geofence & idle events</h3>
+            </div>
+            <div className="mt-4 space-y-3">
+              {alerts.data?.length ? (
+                alerts.data.map(alert => (
+                  <div
+                    key={alert.id}
+                    className="rounded-xl border border-slate-100 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold capitalize">
+                        {alert.eventType.replace("_", " ")}
+                      </p>
+                      <Badge variant="outline" className="capitalize">
+                        {alert.status}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {alert.distanceMeters ?? "—"}m ·{" "}
+                      {formatDateTime(alert.observedAt)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="py-9 text-center text-sm text-slate-400">
+                  No geofence or idle events yet.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2">
+              <Route className="h-5 w-5 text-[#5865cf]" />
+              <h3 className="font-bold">Trip history & mileage</h3>
+            </div>
+            <select
+              value={selectedShiftId}
+              onChange={event => setSelectedShiftId(event.target.value)}
+              className="mt-4 h-10 w-full rounded-md border px-3 text-sm"
+            >
+              <option value="">Choose observed shift</option>
+              {shifts.map(shift => (
+                <option key={shift.shiftId} value={shift.shiftId}>
+                  {shift.rep} · {formatDateTime(shift.capturedAt)}
+                </option>
+              ))}
+            </select>
+            {selectedShiftId && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl bg-[#eff8f5] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#168064]">
+                    Mileage
+                  </p>
+                  <p className="mt-2 text-2xl font-bold">
+                    {((trip.data?.mileageMeters ?? 0) / 1609.344).toFixed(2)} mi
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {trip.data?.points.length ?? 0} GPS points
+                  </p>
+                </div>
+                <div className="rounded-xl bg-[#fff8ed] p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#b96b22]">
+                    Idle events
+                  </p>
+                  <p className="mt-2 text-2xl font-bold">
+                    {trip.data?.idleEvents.length ?? 0}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    5 min / 25m threshold
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-[#bf7128]" />
+              <h3 className="font-bold">Trip idle evidence</h3>
+            </div>
+            <div className="mt-4 space-y-2">
+              {trip.data?.idleEvents.length ? (
+                trip.data.idleEvents.map(event => (
+                  <div
+                    key={event.id}
+                    className="rounded-xl bg-slate-50 p-3 text-sm"
+                  >
+                    <p className="font-semibold capitalize">
+                      {event.eventType.replace("_", " ")}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {event.distanceMeters ?? "—"}m ·{" "}
+                      {formatDateTime(event.observedAt)}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-400">
+                  Choose a shift to inspect its idle evidence.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }

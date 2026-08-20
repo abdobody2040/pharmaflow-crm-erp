@@ -206,3 +206,9 @@
 - [x] Validate all delivered remediation work and save the release checkpoint.
 - [x] Write a detailed Arabic setup and usage guide covering local development, Docker Compose, environment configuration, roles, workflows, and operating safeguards.
 - [x] Validate documented commands and publish the setup and usage guide to the private GitHub repository.
+- [x] Complete shared Arabic/English localization coverage, locale-aware formatting, and browser evidence for major modules.
+- [x] Review all module query paths for indexes, N+1 patterns, and missing pagination; apply only evidence-based safe changes.
+- [x] Add local end-to-end workflow evidence for procurement approval, coaching acknowledgement, and document versioning lifecycle.
+- [x] Reconcile all runbooks with current code, remove dead code, and standardize formatting.
+- [x] Update the final Arabic system review with verified local evidence and explicit staging-only deferrals.
+- [x] Validate, checkpoint, and publish the final local remediation release to GitHub.
