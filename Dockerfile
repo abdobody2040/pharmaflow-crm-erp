@@ -8,4 +8,6 @@ RUN npm install -g corepack@latest \
   && corepack pnpm run build
 
 ENV NODE_ENV=production
+RUN chown -R node:node /app
+USER node
 CMD ["node", "dist/index.js"]

@@ -1,12 +1,31 @@
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
+import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from "@shared/const";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
-import { assertSuperAdmin, assertTenantRole, resolveActiveTenantScope } from "../security/access";
+import {
+  assertSuperAdmin,
+  assertTenantRole,
+  resolveActiveTenantScope,
+} from "../security/access";
 import type { UserRole } from "../../drizzle/schema";
+
+export function withoutServerStack<T extends { data: Record<string, unknown> }>(
+  shape: T
+) {
+  return {
+    ...shape,
+    data: {
+      ...shape.data,
+      stack: undefined,
+    },
+  };
+}
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  errorFormatter({ shape }) {
+    return withoutServerStack(shape);
+  },
 });
 
 export const router = t.router;
@@ -33,23 +52,32 @@ export const superAdminProcedure = protectedProcedure.use(
   t.middleware(({ ctx, next }) => {
     assertSuperAdmin(ctx.user!);
     return next({ ctx: { ...ctx, user: ctx.user! } });
-  }),
+  })
 );
 
 export const tenantProcedure = protectedProcedure.use(
   t.middleware(async ({ ctx, next }) => {
     await resolveActiveTenantScope(ctx.user!);
     return next({ ctx: { ...ctx, user: ctx.user! } });
-  }),
+  })
 );
 
-export function tenantRoleProcedure(allowedRoles: readonly Exclude<UserRole, "super_admin">[]) {
+export function tenantRoleProcedure(
+  allowedRoles: readonly Exclude<UserRole, "super_admin">[]
+) {
   return tenantProcedure.use(
     t.middleware(({ ctx, next }) => {
       // The immediately preceding tenantProcedure already verified an active tenant.
-      assertTenantRole({ tenantId: ctx.user!.tenantId!, userId: ctx.user!.id, role: ctx.user!.role as Exclude<UserRole, "super_admin"> }, allowedRoles);
+      assertTenantRole(
+        {
+          tenantId: ctx.user!.tenantId!,
+          userId: ctx.user!.id,
+          role: ctx.user!.role as Exclude<UserRole, "super_admin">,
+        },
+        allowedRoles
+      );
       return next({ ctx: { ...ctx, user: ctx.user! } });
-    }),
+    })
   );
 }
 

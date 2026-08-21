@@ -171,21 +171,19 @@ export const hrRouter = router({
           fences
         );
         const id = randomUUID();
-        await db
-          .insert(attendanceRecords)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            userId: scope.userId,
-            locationEventId: location.id,
-            geofenceId: decision.geofenceId,
-            attendanceDate: attendanceDate(),
-            eventType: decision.eligible ? "check_in" : "outside_geofence",
-            latitude: location.latitude,
-            longitude: location.longitude,
-            distanceMeters: decision.distanceMeters,
-            createdBy: scope.userId,
-          });
+        await db.insert(attendanceRecords).values({
+          id,
+          tenantId: scope.tenantId,
+          userId: scope.userId,
+          locationEventId: location.id,
+          geofenceId: decision.geofenceId,
+          attendanceDate: attendanceDate(),
+          eventType: decision.eligible ? "check_in" : "outside_geofence",
+          latitude: location.latitude,
+          longitude: location.longitude,
+          distanceMeters: decision.distanceMeters,
+          createdBy: scope.userId,
+        });
         await appendAuditEvent({
           tenantId: scope.tenantId,
           actorUserId: scope.userId,
@@ -248,18 +246,16 @@ export const hrRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database unavailable");
         const id = randomUUID();
-        await db
-          .insert(leaveRequests)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            employeeUserId: scope.userId,
-            leaveType: input.leaveType,
-            startDate: input.startDate,
-            endDate: input.endDate,
-            reason: input.reason ?? null,
-            createdBy: scope.userId,
-          });
+        await db.insert(leaveRequests).values({
+          id,
+          tenantId: scope.tenantId,
+          employeeUserId: scope.userId,
+          leaveType: input.leaveType,
+          startDate: input.startDate,
+          endDate: input.endDate,
+          reason: input.reason ?? null,
+          createdBy: scope.userId,
+        });
         await appendAuditEvent({
           tenantId: scope.tenantId,
           actorUserId: scope.userId,
@@ -421,22 +417,20 @@ export const hrRouter = router({
           );
           receipt = { ...stored, mime: decoded.mime };
         }
-        await db
-          .insert(expenseReports)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            employeeUserId: scope.userId,
-            category: input.category,
-            amount: String(input.amount),
-            currency: input.currency.toUpperCase(),
-            expenseDate: input.expenseDate,
-            description: input.description ?? null,
-            receiptKey: receipt?.key ?? null,
-            receiptUrl: receipt?.url ?? null,
-            receiptMimeType: receipt?.mime ?? null,
-            createdBy: scope.userId,
-          });
+        await db.insert(expenseReports).values({
+          id,
+          tenantId: scope.tenantId,
+          employeeUserId: scope.userId,
+          category: input.category,
+          amount: String(input.amount),
+          currency: input.currency.toUpperCase(),
+          expenseDate: input.expenseDate,
+          description: input.description ?? null,
+          receiptKey: receipt?.key ?? null,
+          receiptUrl: receipt?.url ?? null,
+          receiptMimeType: receipt?.mime ?? null,
+          createdBy: scope.userId,
+        });
         await appendAuditEvent({
           tenantId: scope.tenantId,
           actorUserId: scope.userId,
@@ -609,17 +603,15 @@ export const hrRouter = router({
               ?.currency ?? "USD",
         }));
         const runId = randomUUID();
-        await db
-          .insert(payrollExportRuns)
-          .values({
-            id: runId,
-            tenantId: scope.tenantId,
-            periodStart: input.periodStart,
-            periodEnd: input.periodEnd,
-            format: input.format,
-            rowCount: rows.length,
-            createdBy: scope.userId,
-          });
+        await db.insert(payrollExportRuns).values({
+          id: runId,
+          tenantId: scope.tenantId,
+          periodStart: input.periodStart,
+          periodEnd: input.periodEnd,
+          format: input.format,
+          rowCount: rows.length,
+          createdBy: scope.userId,
+        });
         await appendAuditEvent({
           tenantId: scope.tenantId,
           actorUserId: scope.userId,
@@ -637,7 +629,7 @@ export const hrRouter = router({
           reason: "Authorized payroll export",
         });
         const periodLabel = `${input.periodStart.toISOString().slice(0, 10)}-${input.periodEnd.toISOString().slice(0, 10)}`;
-        const formatted = formatPayrollContent(rows, input.format);
+        const formatted = await formatPayrollContent(rows, input.format);
         return {
           filename: `payroll-${periodLabel}.${input.format}`,
           ...formatted,

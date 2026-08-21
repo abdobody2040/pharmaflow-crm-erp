@@ -212,3 +212,8 @@
 - [x] Reconcile all runbooks with current code, remove dead code, and standardize formatting.
 - [x] Update the final Arabic system review with verified local evidence and explicit staging-only deferrals.
 - [x] Validate, checkpoint, and publish the final local remediation release to GitHub.
+- [x] Execute comprehensive local QA across all implemented modules and close verified feature defects.
+- [x] Expand end-to-end coverage for critical role-based user journeys with local contracts or disposable fixtures.
+- [x] Conduct static and local dynamic security checks, remediate verified findings, and record staging-only limitations.
+- [x] Publish a QA and security assessment report with reproducible commands and evidence.
+- [x] Validate, checkpoint, and push the QA and security release to the private GitHub repository.
