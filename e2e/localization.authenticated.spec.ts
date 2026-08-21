@@ -1,4 +1,4 @@
-import { authenticatedConfigured, expect, test } from "./auth.fixture";
+import { expect, test } from "./auth.fixture";
 
 const configuredPaths = (
   process.env.E2E_MAJOR_PATHS ??
@@ -12,14 +12,13 @@ const knownEnglishLabels =
   /Warehouse Inventory|Document Register|Integrations|Compliance Review|Operations Expansion|Inventory control|Document register|Record compensating movement|Create scorecard|Issue v1 API key/i;
 
 test.describe("authenticated Arabic major-module localization", () => {
-  test.skip(
-    !authenticatedConfigured,
-    "Authenticated Arabic module checks require disposable local E2E credentials."
-  );
-
   test("renders each role-accessible configured module in RTL without known English operational labels", async ({
     authenticatedPage,
   }) => {
+    await authenticatedPage
+      .getByRole("button", { name: "Open profile menu" })
+      .first()
+      .click();
     await authenticatedPage
       .getByRole("button", { name: /Arabic|العربية/i })
       .click();

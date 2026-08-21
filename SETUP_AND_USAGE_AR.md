@@ -78,16 +78,16 @@ pnpm test
 pnpm test:e2e
 ```
 
-| الأمر                       | الاستخدام                                                               |
-| --------------------------- | ----------------------------------------------------------------------- |
-| `pnpm dev`                  | تشغيل بيئة التطوير مع مراقبة التغييرات.                                 |
-| `pnpm check`                | فحص TypeScript دون إخراج build.                                         |
-| `pnpm test`                 | تشغيل اختبارات Vitest.                                                  |
-| `pnpm test:e2e`             | تشغيل اختبارات Playwright المحلية المتاحة.                              |
-| `pnpm build`                | إنتاج ملفات `dist/` للنشر.                                              |
-| `pnpm start`                | تشغيل build إنتاجي موجود في `dist/`.                                    |
-| `pnpm drizzle-kit generate` | إنشاء migration بعد تعديل `drizzle/schema.ts`.                          |
-| `pnpm drizzle-kit migrate`  | تطبيق migrations المراجعة على قاعدة البيانات المحددة في `DATABASE_URL`. |
+| الأمر                       | الاستخدام                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm dev`                  | تشغيل بيئة التطوير مع مراقبة التغييرات.                                                                                  |
+| `pnpm check`                | فحص TypeScript دون إخراج build.                                                                                          |
+| `pnpm test`                 | تشغيل اختبارات Vitest.                                                                                                   |
+| `pnpm test:e2e`             | تشغيل Playwright عبر خادم اختبار محلي مؤقت على المنفذ 3200 وسر JWT عشوائي؛ يتضمن fixture ينشئ وينظف tenant/user مصادقين. |
+| `pnpm build`                | إنتاج ملفات `dist/` للنشر.                                                                                               |
+| `pnpm start`                | تشغيل build إنتاجي موجود في `dist/`.                                                                                     |
+| `pnpm drizzle-kit generate` | إنشاء migration بعد تعديل `drizzle/schema.ts`.                                                                           |
+| `pnpm drizzle-kit migrate`  | تطبيق migrations المراجعة على قاعدة البيانات المحددة في `DATABASE_URL`.                                                  |
 
 > لا تشغّل `drizzle-kit generate` أو `drizzle-kit migrate` على قاعدة تشغيلية قبل مراجعة ملف SQL الناتج، وأخذ نسخة احتياطية، وتوثيق تغيير الإصدار.
 

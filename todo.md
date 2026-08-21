@@ -217,3 +217,10 @@
 - [x] Conduct static and local dynamic security checks, remediate verified findings, and record staging-only limitations.
 - [x] Publish a QA and security assessment report with reproducible commands and evidence.
 - [x] Validate, checkpoint, and push the QA and security release to the private GitHub repository.
+- [x] Enable an ephemeral authenticated Playwright scenario with test-tenant and test-user lifecycle cleanup.
+- [x] Harden webhook SSRF defenses against redirect chains, private address ranges, and baseline DNS rebinding risks.
+- [x] Add a documented periodic monitoring plan for the transitive ExcelJS uuid advisory.
+- [x] Create STAGING_ACTIVATION_CHECKLIST_AR.md with copy-paste commands for benchmarks, DAST, NTP, backup/restore, and Android/iOS.
+- [x] Reconcile all runbooks, QA documentation, setup guidance, and review counts with the final local evidence.
+- [x] Update FULL_SYSTEM_REVIEW_AR.md with an explicit feature-complete local readiness summary and staging-only execution boundary.
+- [x] Validate, checkpoint, and publish the final no-staging remediation release.

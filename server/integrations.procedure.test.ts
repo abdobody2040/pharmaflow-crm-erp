@@ -6,6 +6,10 @@ vi.mock("./db", () => ({
   appendAuditEvent: vi.fn(),
 }));
 import { appRouter } from "./routers";
+import {
+  assertPublicWebhookTarget,
+  isUnsafeHost,
+} from "./routers/integrations";
 
 const rep = {
   id: 82,
@@ -87,5 +91,25 @@ describe("integration gateway authorization", () => {
     await expect(
       register("https://user:password@example.org/hook")
     ).rejects.toThrow("Webhook URL must use public HTTPS");
+  });
+
+  it("blocks reserved ranges and DNS answers that could reach private infrastructure", async () => {
+    expect(isUnsafeHost("100.64.0.1")).toBe(true);
+    expect(isUnsafeHost("192.0.2.1")).toBe(true);
+    expect(isUnsafeHost("198.51.100.20")).toBe(true);
+    expect(isUnsafeHost("203.0.113.5")).toBe(true);
+    expect(isUnsafeHost("224.0.0.1")).toBe(true);
+    expect(isUnsafeHost("::ffff:127.0.0.1")).toBe(true);
+
+    await expect(
+      assertPublicWebhookTarget("https://callback.example/hook", async () => [
+        { address: "10.0.0.8", family: 4 },
+      ])
+    ).rejects.toThrow("does not resolve to a public address");
+    await expect(
+      assertPublicWebhookTarget("https://callback.example/hook", async () => [
+        { address: "93.184.216.34", family: 4 },
+      ])
+    ).resolves.toBeUndefined();
   });
 });

@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, randomUUID } from "crypto";
+import { lookup } from "dns/promises";
 import { and, desc, eq } from "drizzle-orm";
 import { isIP } from "net";
 import { z } from "zod";
@@ -33,7 +34,7 @@ const webhookSignature = (value: string) =>
   )
     .update(value)
     .digest("hex");
-const isUnsafeHost = (hostname: string) => {
+export const isUnsafeHost = (hostname: string) => {
   const host = hostname.toLowerCase();
   if (
     host === "localhost" ||
@@ -43,22 +44,32 @@ const isUnsafeHost = (hostname: string) => {
   )
     return true;
   if (isIP(host) === 4) {
-    const [a, b] = host.split(".").map(Number);
+    const [a, b, c] = host.split(".").map(Number);
     return (
       a === 10 ||
       a === 127 ||
       a === 0 ||
+      a >= 224 ||
+      (a === 100 && b >= 64 && b <= 127) ||
       (a === 169 && b === 254) ||
       (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168)
+      (a === 192 && b === 168) ||
+      (a === 192 && b === 0 && c === 0) ||
+      (a === 192 && b === 0 && c === 2) ||
+      (a === 198 && (b === 18 || b === 19)) ||
+      (a === 198 && b === 51 && c === 100) ||
+      (a === 203 && b === 0 && c === 113)
     );
   }
   if (isIP(host) === 6)
     return (
+      host === "::" ||
       host === "::1" ||
+      host.startsWith("::ffff:") ||
       host.startsWith("fc") ||
       host.startsWith("fd") ||
-      host.startsWith("fe80:")
+      host.startsWith("fe80:") ||
+      host.startsWith("2001:db8:")
     );
   return false;
 };
@@ -84,6 +95,25 @@ const controlledHttpsUrl = z
       issue.addIssue({ code: "custom", message: "Webhook URL is invalid" });
     }
   });
+
+export async function assertPublicWebhookTarget(
+  endpointUrl: string,
+  resolveHost: typeof lookup = lookup
+) {
+  const url = new URL(endpointUrl);
+  if (isUnsafeHost(url.hostname)) {
+    throw new Error("Webhook target does not resolve to a public address");
+  }
+  const answers = await Promise.race([
+    resolveHost(url.hostname, { all: true, verbatim: true }),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Webhook DNS lookup timed out")), 2000)
+    ),
+  ]);
+  if (!answers.length || answers.some(answer => isUnsafeHost(answer.address))) {
+    throw new Error("Webhook target does not resolve to a public address");
+  }
+}
 async function ownedEndpoint(tenantId: string, id: string) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -155,19 +185,17 @@ export const integrationsRouter = router({
         const apiKey = `pf_v1_${randomBytes(32).toString("base64url")}`;
         const prefix = apiKey.slice(0, 18);
         const id = randomUUID();
-        await db
-          .insert(integrationApiKeys)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            label: input.label,
-            apiVersion: "v1",
-            keyPrefix: prefix,
-            keyHash: keyHash(apiKey),
-            scopes: input.scopes,
-            expiresAt: input.expiresAt ?? null,
-            createdBy: scope.userId,
-          });
+        await db.insert(integrationApiKeys).values({
+          id,
+          tenantId: scope.tenantId,
+          label: input.label,
+          apiVersion: "v1",
+          keyPrefix: prefix,
+          keyHash: keyHash(apiKey),
+          scopes: input.scopes,
+          expiresAt: input.expiresAt ?? null,
+          createdBy: scope.userId,
+        });
         await evidence(
           scope,
           "integration_api_key",
@@ -267,20 +295,19 @@ export const integrationsRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const scope = resolveTenantScope(ctx.user!);
+        await assertPublicWebhookTarget(input.endpointUrl);
         const db = await getDb();
         if (!db) throw new Error("Database unavailable");
         const id = randomUUID();
-        await db
-          .insert(webhookEndpoints)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            name: input.name,
-            endpointUrl: input.endpointUrl,
-            payloadVersion: "v1",
-            eventTypes: input.eventTypes,
-            createdBy: scope.userId,
-          });
+        await db.insert(webhookEndpoints).values({
+          id,
+          tenantId: scope.tenantId,
+          name: input.name,
+          endpointUrl: input.endpointUrl,
+          payloadVersion: "v1",
+          eventTypes: input.eventTypes,
+          createdBy: scope.userId,
+        });
         await evidence(
           scope,
           "webhook_endpoint",
@@ -354,6 +381,7 @@ export const integrationsRouter = router({
           (endpoint.eventTypes as string[]).includes(input.eventType)
         ) {
           try {
+            await assertPublicWebhookTarget(endpoint.endpointUrl);
             const response = await fetch(endpoint.endpointUrl, {
               method: "POST",
               redirect: "error",
@@ -380,21 +408,19 @@ export const integrationsRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database unavailable");
         const id = randomUUID();
-        await db
-          .insert(webhookDeliveryLogs)
-          .values({
-            id,
-            tenantId: scope.tenantId,
-            endpointId: endpoint.id,
-            eventType: input.eventType,
-            payloadHash,
-            deliveryStatus,
-            httpStatus,
-            responseSummary,
-            attemptedAt: new Date(),
-            durationMs: Date.now() - started,
-            createdBy: scope.userId,
-          });
+        await db.insert(webhookDeliveryLogs).values({
+          id,
+          tenantId: scope.tenantId,
+          endpointId: endpoint.id,
+          eventType: input.eventType,
+          payloadHash,
+          deliveryStatus,
+          httpStatus,
+          responseSummary,
+          attemptedAt: new Date(),
+          durationMs: Date.now() - started,
+          createdBy: scope.userId,
+        });
         await evidence(
           scope,
           "webhook_delivery",
