@@ -224,3 +224,4 @@
 - [x] Reconcile all runbooks, QA documentation, setup guidance, and review counts with the final local evidence.
 - [x] Update FULL_SYSTEM_REVIEW_AR.md with an explicit feature-complete local readiness summary and staging-only execution boundary.
 - [x] Validate, checkpoint, and publish the final no-staging remediation release.
+- [x] Add bilingual user-visible network and server connection-status notifications during data synchronization.

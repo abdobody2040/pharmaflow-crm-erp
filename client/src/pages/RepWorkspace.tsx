@@ -9,18 +9,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  statusForSyncFailure,
+  statusTone,
+  type SyncConnectionStatus,
+} from "@/lib/syncConnection";
 import { trpc } from "@/lib/trpc";
 import {
   CalendarCheck2,
   CircleStop,
+  CloudCog,
+  CloudOff,
   LibraryBig,
   MapPin,
   PackageCheck,
   RefreshCw,
   Search,
   ShieldCheck,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AccessDenied } from "./Tenants";
 
@@ -42,9 +52,12 @@ const readQueue = (): QueuedVisit[] => {
     return [];
   }
 };
+const isBrowserOnline = () =>
+  typeof navigator === "undefined" ? true : navigator.onLine;
 
 export default function RepWorkspace() {
   const { user } = useAuth();
+  const { tr } = useLanguage();
   const utils = trpc.useUtils();
   const [query, setQuery] = useState("");
   const [selectedAccount, setSelectedAccount] = useState<{
@@ -55,7 +68,11 @@ export default function RepWorkspace() {
   const [products, setProducts] = useState("");
   const [nextSteps, setNextSteps] = useState("");
   const [queue, setQueue] = useState<QueuedVisit[]>([]);
-  const [online, setOnline] = useState(navigator.onLine);
+  const [online, setOnline] = useState(isBrowserOnline);
+  const [connectionStatus, setConnectionStatus] =
+    useState<SyncConnectionStatus>(() =>
+      isBrowserOnline() ? "ready" : "offline"
+    );
   const [sampleProduct, setSampleProduct] = useState("");
   const [sampleLot, setSampleLot] = useState("");
   const [sampleExpiry, setSampleExpiry] = useState("");
@@ -93,12 +110,7 @@ export default function RepWorkspace() {
       await utils.rep.shift.current.invalidate();
     },
   });
-  const syncVisit = trpc.rep.syncVisit.useMutation({
-    onSuccess: async () => {
-      toast.success("Visit synced through immutable evidence path.");
-      await utils.rep.dailyPlan.invalidate();
-    },
-  });
+  const syncVisit = trpc.rep.syncVisit.useMutation();
   const checkout = trpc.rep.sampleCheckout.useMutation({
     onSuccess: async () => {
       setSampleProduct("");
@@ -116,15 +128,117 @@ export default function RepWorkspace() {
   });
   useEffect(() => {
     setQueue(readQueue());
-    const sync = () => setOnline(navigator.onLine);
-    window.addEventListener("online", sync);
-    window.addEventListener("offline", sync);
-    return () => {
-      window.removeEventListener("online", sync);
-      window.removeEventListener("offline", sync);
+    const handleOnline = () => {
+      setOnline(true);
+      setConnectionStatus("reconnecting");
+      toast.success(
+        tr("Network connection restored. Queued data is ready to sync.")
+      );
     };
+    const handleOffline = () => {
+      setOnline(false);
+      setConnectionStatus("offline");
+      toast.warning(
+        tr(
+          "Network connection lost. New visit data will be saved safely for later sync."
+        )
+      );
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [tr]);
+
+  const persistQueue = useCallback((next: QueuedVisit[]) => {
+    localStorage.setItem(queueKey, JSON.stringify(next));
+    setQueue(next);
+  }, []);
+
+  const enqueueVisit = useCallback((payload: QueuedVisit) => {
+    setQueue(current => {
+      if (
+        current.some(item => item.clientMutationId === payload.clientMutationId)
+      ) {
+        return current;
+      }
+      const next = [...current, payload];
+      localStorage.setItem(queueKey, JSON.stringify(next));
+      return next;
+    });
   }, []);
   if (!user || !repRoles.includes(user.role)) return <AccessDenied />;
+
+  const syncPayload = async (payload: QueuedVisit, alreadyQueued = false) => {
+    if (!isBrowserOnline()) {
+      setOnline(false);
+      setConnectionStatus("offline");
+      if (!alreadyQueued) enqueueVisit(payload);
+      toast.warning(
+        tr("Offline: visit saved to the browser queue for later sync.")
+      );
+      return false;
+    }
+
+    setConnectionStatus("syncing");
+    try {
+      await syncVisit.mutateAsync({
+        ...payload,
+        occurredAt: new Date(payload.occurredAt),
+      });
+      setConnectionStatus("ready");
+      await utils.rep.dailyPlan.invalidate();
+      toast.success(tr("Visit synced through immutable evidence path."));
+      return true;
+    } catch (error) {
+      const failure = statusForSyncFailure(error, isBrowserOnline());
+      if (failure) {
+        setConnectionStatus(failure);
+        if (!alreadyQueued) enqueueVisit(payload);
+        toast.error(
+          failure === "offline"
+            ? tr(
+                "Network connection lost. Your visit was saved for later sync."
+              )
+            : tr(
+                "Server is unreachable. Your visit was saved and will remain queued until retry."
+              )
+        );
+      } else {
+        setConnectionStatus("ready");
+        toast.error(
+          error instanceof Error ? error.message : tr("Unable to sync visit.")
+        );
+      }
+      return false;
+    }
+  };
+
+  const connectionLabel = {
+    ready: tr("Connected to server · sync ready"),
+    syncing: tr("Syncing data with server…"),
+    offline: tr("Offline · data is protected in this device queue"),
+    reconnecting: tr("Connection restored · checking server…"),
+    "server-unreachable": tr("Server unreachable · queued data is protected"),
+  }[connectionStatus];
+  const queueSummary = queue.length
+    ? tr("{count} visit record(s) waiting to sync.").replace(
+        "{count}",
+        String(queue.length)
+      )
+    : tr("No visit data is waiting to sync.");
+  const ConnectionIcon =
+    connectionStatus === "ready"
+      ? Wifi
+      : connectionStatus === "offline"
+        ? WifiOff
+        : connectionStatus === "server-unreachable"
+          ? CloudOff
+          : CloudCog;
+  const connectionTone = statusTone(connectionStatus);
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!selectedAccount) return toast.error("Select an HCP/account first.");
@@ -140,30 +254,30 @@ export default function RepWorkspace() {
       nextSteps: nextSteps || undefined,
       occurredAt: new Date().toISOString(),
     };
-    if (!online) {
-      const next = [...queue, payload];
-      localStorage.setItem(queueKey, JSON.stringify(next));
-      setQueue(next);
-      toast.message(
-        "Offline: visit saved to the browser queue for later sync."
+    void syncPayload(payload);
+  };
+  const flushQueue = async () => {
+    if (!queue.length) return;
+    if (!isBrowserOnline()) {
+      setOnline(false);
+      setConnectionStatus("offline");
+      toast.warning(
+        tr(
+          "Network connection is still unavailable. Queued data remains protected."
+        )
       );
       return;
     }
-    syncVisit.mutate({ ...payload, occurredAt: new Date(payload.occurredAt) });
-  };
-  const flushQueue = async () => {
-    if (!online || !queue.length) return;
-    const first = queue[0];
-    syncVisit.mutate(
-      { ...first, occurredAt: new Date(first.occurredAt) },
-      {
-        onSuccess: () => {
-          const next = queue.slice(1);
-          localStorage.setItem(queueKey, JSON.stringify(next));
-          setQueue(next);
-        },
-      }
-    );
+    let remaining = [...queue];
+    for (const payload of queue) {
+      const synced = await syncPayload(payload, true);
+      if (!synced) break;
+      remaining = remaining.slice(1);
+      persistQueue(remaining);
+    }
+    if (!remaining.length) {
+      toast.success(tr("All queued visit data is now synced."));
+    }
   };
   return (
     <div className="space-y-6">
@@ -210,6 +324,43 @@ export default function RepWorkspace() {
               </Button>
             )}
           </div>
+        </div>
+        <div
+          aria-live="polite"
+          data-i18n-dynamic
+          data-testid="sync-connection-status"
+          className={`mt-5 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
+            connectionTone === "success"
+              ? "border-[#2b9b7c]/35 bg-[#123c3c] text-[#c4ecdf]"
+              : connectionTone === "warning"
+                ? "border-amber-200/30 bg-amber-400/10 text-amber-100"
+                : "border-sky-200/25 bg-sky-400/10 text-sky-100"
+          }`}
+        >
+          <ConnectionIcon
+            className={`h-5 w-5 shrink-0 ${
+              connectionStatus === "syncing" ||
+              connectionStatus === "reconnecting"
+                ? "animate-spin"
+                : ""
+            }`}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{connectionLabel}</p>
+            <p className="mt-0.5 text-xs opacity-85">{queueSummary}</p>
+          </div>
+          {queue.length > 0 && online && connectionStatus !== "syncing" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void flushQueue()}
+              className="border-current bg-transparent text-inherit hover:bg-white/10 hover:text-inherit"
+            >
+              <RefreshCw className="mr-2 h-3.5 w-3.5" />
+              {tr("Retry sync")}
+            </Button>
+          )}
         </div>
         {shift.data && (
           <p className="mt-5 rounded-xl bg-[#173357] px-4 py-3 text-xs text-[#c4ecdf]">
@@ -400,12 +551,10 @@ export default function RepWorkspace() {
                 <span
                   className={`text-xs font-semibold ${online ? "text-[#178066]" : "text-[#b96b22]"}`}
                 >
-                  {online
-                    ? "Online · sync ready"
-                    : `Offline · ${queue.length} queued`}
+                  {connectionLabel}
                 </span>
                 <Button
-                  disabled={syncVisit.isPending}
+                  disabled={connectionStatus === "syncing"}
                   className="bg-[#147d66] hover:bg-[#0f6956]"
                 >
                   Record visit
@@ -467,11 +616,11 @@ export default function RepWorkspace() {
       </Card>
       {queue.length > 0 && (
         <button
-          onClick={flushQueue}
+          onClick={() => void flushQueue()}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#eed9ba] bg-[#fffaf1] p-3 text-sm font-semibold text-[#9a5c1b]"
         >
           <RefreshCw className="h-4 w-4" />
-          Sync {queue.length} queued visit{queue.length === 1 ? "" : "s"}
+          {tr("Sync queued visits")}
         </button>
       )}
     </div>

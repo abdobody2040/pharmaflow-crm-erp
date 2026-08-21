@@ -699,7 +699,35 @@ Object.assign(arabicStrings, {
   Terminology: "المصطلحات",
   "PharmaFlow / Tenant": "PharmaFlow / العميل",
   "CRM account universe": "دليل حسابات إدارة العملاء",
-  "Accounts & HCP directory": "دليل الحسابات ومقدمي الرعاية",
+  "Accounts & HCP directory": "دليل الحسابات ومقدمو الرعاية",
+  "Connected to server · sync ready": "متصل بالخادم · المزامنة جاهزة",
+  "Syncing data with server…": "جارٍ مزامنة البيانات مع الخادم…",
+  "Offline · data is protected in this device queue":
+    "غير متصل · البيانات محفوظة في قائمة انتظار هذا الجهاز",
+  "Connection restored · checking server…":
+    "تمت استعادة الاتصال · جارٍ فحص الخادم…",
+  "Server unreachable · queued data is protected":
+    "الخادم غير متاح · البيانات في قائمة الانتظار محفوظة",
+  "No visit data is waiting to sync.": "لا توجد بيانات زيارة بانتظار المزامنة.",
+  "{count} visit record(s) waiting to sync.":
+    "هناك {count} سجل زيارة بانتظار المزامنة.",
+  "Network connection restored. Queued data is ready to sync.":
+    "تمت استعادة اتصال الشبكة. البيانات في قائمة الانتظار جاهزة للمزامنة.",
+  "Network connection lost. New visit data will be saved safely for later sync.":
+    "فُقد اتصال الشبكة. ستُحفظ بيانات الزيارة الجديدة بأمان للمزامنة لاحقاً.",
+  "Offline: visit saved to the browser queue for later sync.":
+    "غير متصل: حُفظت الزيارة في قائمة انتظار المتصفح للمزامنة لاحقاً.",
+  "Network connection lost. Your visit was saved for later sync.":
+    "فُقد اتصال الشبكة. حُفظت زيارتك للمزامنة لاحقاً.",
+  "Server is unreachable. Your visit was saved and will remain queued until retry.":
+    "الخادم غير متاح. حُفظت زيارتك وستبقى في قائمة الانتظار حتى إعادة المحاولة.",
+  "Unable to sync visit.": "تعذر مزامنة الزيارة.",
+  "Network connection is still unavailable. Queued data remains protected.":
+    "اتصال الشبكة لا يزال غير متاح. البيانات في قائمة الانتظار محفوظة.",
+  "All queued visit data is now synced.":
+    "تمت الآن مزامنة جميع بيانات الزيارات في قائمة الانتظار.",
+  "Retry sync": "إعادة محاولة المزامنة",
+  "Sync queued visits": "مزامنة الزيارات في قائمة الانتظار",
   "Manage HCPs, doctors, pharmacies, hospitals, distributors, and organizations inside the active tenant boundary.":
     "أدر مقدمي الرعاية والأطباء والصيدليات والمستشفيات والموزعين والمنظمات ضمن حدود العميل النشط.",
 });
@@ -750,7 +778,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       let node: Text | null;
       while ((node = walker.nextNode() as Text | null)) {
         const parent = node.parentElement;
-        if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName))
+        if (
+          !parent ||
+          ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName) ||
+          parent.closest("[data-i18n-dynamic]")
+        )
           continue;
         const original = originals.current.get(node) ?? node.textContent ?? "";
         if (!original.trim()) continue;
