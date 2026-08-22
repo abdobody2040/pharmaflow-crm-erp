@@ -225,3 +225,10 @@
 - [x] Update FULL_SYSTEM_REVIEW_AR.md with an explicit feature-complete local readiness summary and staging-only execution boundary.
 - [x] Validate, checkpoint, and publish the final no-staging remediation release.
 - [x] Add bilingual user-visible network and server connection-status notifications during data synchronization.
+- [x] Execute and document an authenticated network-outage notification scenario: offline banner/toast, protected queue behavior, reconnection notice, and retry readiness.
+
+---
+
+## Validation history
+
+- Connectivity outage scenario requested on 2026-08-22; execution pending.
