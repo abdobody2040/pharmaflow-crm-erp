@@ -5,6 +5,12 @@ export type SyncConnectionStatus =
   | "reconnecting"
   | "server-unreachable";
 
+export type SyncQueueMetadata = {
+  syncAttempts?: number;
+  lastAttemptAt?: string;
+  lastFailureReason?: string;
+};
+
 type TrpcLikeError = {
   data?: { httpStatus?: number };
   message?: string;
@@ -33,6 +39,30 @@ export function statusForSyncFailure(
   )
     ? "server-unreachable"
     : null;
+}
+
+export function recordSyncAttempt<T extends SyncQueueMetadata>(
+  entry: T,
+  attemptedAt: string
+): T {
+  return {
+    ...entry,
+    syncAttempts: (entry.syncAttempts ?? 0) + 1,
+    lastAttemptAt: attemptedAt,
+    lastFailureReason: undefined,
+  };
+}
+
+export function recordSyncFailure<T extends SyncQueueMetadata>(
+  entry: T,
+  reason: string,
+  failedAt: string
+): T {
+  return {
+    ...entry,
+    lastAttemptAt: failedAt,
+    lastFailureReason: reason,
+  };
 }
 
 export function statusTone(status: SyncConnectionStatus) {

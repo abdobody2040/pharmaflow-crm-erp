@@ -29,3 +29,9 @@ Use macOS with Xcode and an iOS simulator or signed development device, then run
 ## Acceptance criteria
 
 The rep cannot start tracking without consent and an active shift. Each accepted ping remains tenant/rep/shift scoped. Offline mutations replay idempotently after connectivity returns. The signature procedure requires both credential confirmation and explicit action. Visit/sample records, GPS evidence, and dashboard aggregates are visible only to authorized users in the disposable tenant. Record any discrepancy as an OQ deviation; do not mark the mobile path passed without device artifacts.
+
+## Network-outage and retry evidence
+
+For both Android and iOS, create one disposable planned visit, start the explicitly consented shift, and disable the emulator/device network immediately before submitting the visit. Confirm the UI or system notification reports the offline state and that the queued operation retains its immutable client mutation ID. Restore connectivity, trigger the queue retry, and capture the transition from syncing to completed. Record the queue count before and after replay, the attempt count, the last-attempt timestamp, the failure reason captured during the outage, and the server-side visit/audit identifiers. Repeat once with the server endpoint unavailable while the device remains online to distinguish a transport/server failure from a device-offline failure.
+
+These device runs remain staging-dependent in this Linux sandbox. Do not claim Android or iOS execution until emulator/device artifacts, API logs, and tenant-scoped server evidence are attached to the test record.

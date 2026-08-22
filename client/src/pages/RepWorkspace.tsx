@@ -11,9 +11,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
+  recordSyncAttempt,
+  recordSyncFailure,
   statusForSyncFailure,
   statusTone,
   type SyncConnectionStatus,
+  type SyncQueueMetadata,
 } from "@/lib/syncConnection";
 import { trpc } from "@/lib/trpc";
 import {
@@ -35,7 +38,7 @@ import { toast } from "sonner";
 import { AccessDenied } from "./Tenants";
 
 const repRoles = ["admin", "manager", "rep"];
-type QueuedVisit = {
+type QueuedVisit = SyncQueueMetadata & {
   clientMutationId: string;
   accountName: string;
   accountId?: string;
@@ -47,7 +50,16 @@ type QueuedVisit = {
 const queueKey = "pharmaflow-rep-web-queue";
 const readQueue = (): QueuedVisit[] => {
   try {
-    return JSON.parse(localStorage.getItem(queueKey) ?? "[]");
+    const parsed: unknown = JSON.parse(localStorage.getItem(queueKey) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(item => {
+      const entry = item as QueuedVisit;
+      return {
+        ...entry,
+        syncAttempts:
+          typeof entry.syncAttempts === "number" ? entry.syncAttempts : 0,
+      };
+    });
   } catch {
     return [];
   }
@@ -157,6 +169,16 @@ export default function RepWorkspace() {
     setQueue(next);
   }, []);
 
+  const updateQueueItem = useCallback((payload: QueuedVisit) => {
+    setQueue(current => {
+      const next = current.map(item =>
+        item.clientMutationId === payload.clientMutationId ? payload : item
+      );
+      localStorage.setItem(queueKey, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const enqueueVisit = useCallback((payload: QueuedVisit) => {
     setQueue(current => {
       if (
@@ -175,7 +197,13 @@ export default function RepWorkspace() {
     if (!isBrowserOnline()) {
       setOnline(false);
       setConnectionStatus("offline");
-      if (!alreadyQueued) enqueueVisit(payload);
+      const failedPayload = recordSyncFailure(
+        payload,
+        "Browser is offline",
+        new Date().toISOString()
+      );
+      if (alreadyQueued) updateQueueItem(failedPayload);
+      else enqueueVisit(failedPayload);
       toast.warning(
         tr("Offline: visit saved to the browser queue for later sync.")
       );
@@ -183,10 +211,21 @@ export default function RepWorkspace() {
     }
 
     setConnectionStatus("syncing");
+    const attemptedPayload = recordSyncAttempt(
+      payload,
+      new Date().toISOString()
+    );
+    if (alreadyQueued) updateQueueItem(attemptedPayload);
+    const {
+      syncAttempts: _syncAttempts,
+      lastAttemptAt: _lastAttemptAt,
+      lastFailureReason: _lastFailureReason,
+      ...visitPayload
+    } = attemptedPayload;
     try {
       await syncVisit.mutateAsync({
-        ...payload,
-        occurredAt: new Date(payload.occurredAt),
+        ...visitPayload,
+        occurredAt: new Date(visitPayload.occurredAt),
       });
       setConnectionStatus("ready");
       await utils.rep.dailyPlan.invalidate();
@@ -196,7 +235,19 @@ export default function RepWorkspace() {
       const failure = statusForSyncFailure(error, isBrowserOnline());
       if (failure) {
         setConnectionStatus(failure);
-        if (!alreadyQueued) enqueueVisit(payload);
+        const failureReason =
+          failure === "offline"
+            ? "Browser went offline during sync"
+            : `Server unavailable: ${
+                error instanceof Error ? error.message : "transport failure"
+              }`;
+        const failedPayload = recordSyncFailure(
+          attemptedPayload,
+          failureReason,
+          new Date().toISOString()
+        );
+        if (alreadyQueued) updateQueueItem(failedPayload);
+        else enqueueVisit(failedPayload);
         toast.error(
           failure === "offline"
             ? tr(
@@ -622,6 +673,32 @@ export default function RepWorkspace() {
           <RefreshCw className="h-4 w-4" />
           {tr("Sync queued visits")}
         </button>
+      )}
+      {queue.length > 0 && (
+        <div
+          data-i18n-dynamic
+          className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600"
+        >
+          {queue.map(item => (
+            <div
+              key={item.clientMutationId}
+              className="flex flex-wrap items-center justify-between gap-2"
+            >
+              <span className="font-semibold">{item.accountName}</span>
+              <span>
+                {tr("Attempts")}: {item.syncAttempts ?? 0}
+                {item.lastAttemptAt
+                  ? ` · ${new Date(item.lastAttemptAt).toLocaleString()}`
+                  : ""}
+              </span>
+              {item.lastFailureReason && (
+                <span className="w-full text-amber-700">
+                  {tr("Last failure")}: {item.lastFailureReason}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

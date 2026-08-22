@@ -727,6 +727,8 @@ Object.assign(arabicStrings, {
   "All queued visit data is now synced.":
     "تمت الآن مزامنة جميع بيانات الزيارات في قائمة الانتظار.",
   "Retry sync": "إعادة محاولة المزامنة",
+  Attempts: "المحاولات",
+  "Last failure": "آخر فشل",
   "Sync queued visits": "مزامنة الزيارات في قائمة الانتظار",
   "Manage HCPs, doctors, pharmacies, hospitals, distributors, and organizations inside the active tenant boundary.":
     "أدر مقدمي الرعاية والأطباء والصيدليات والمستشفيات والموزعين والمنظمات ضمن حدود العميل النشط.",

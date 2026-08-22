@@ -231,4 +231,7 @@
 
 ## Validation history
 
-- Connectivity outage scenario requested on 2026-08-22; execution pending.
+- Connectivity outage scenario executed on 2026-08-22; authenticated Playwright outage/replay coverage passed, and Android/iOS physical execution remains staging-dependent.
+- [x] Test a real queued visit submission during simulated network loss and verify replay after reconnection.
+- [x] Add sync-attempt count, last-attempt timestamp, and failure reason to each web sync-queue item and its UI.
+- [x] Extend Android/iOS sync-outage harness documentation and retain physical-device execution as staging-dependent.
